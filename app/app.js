@@ -7,10 +7,6 @@ const VOCALI = ['a', 'e', 'i', 'o', 'u'];
 // Consonanti disponibili nella griglia di selezione
 const CONSONANTI = ['b', 'c', 'd', 'f', 'g', 'h', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z'];
 
-// Fonemi italiani: combinazioni di più lettere che producono un unico suono.
-// Trattati come una singola unità selezionabile, al pari delle consonanti.
-const FONEMI = ['gi'];
-
 // Messaggi di congratulazioni mostrati a rotazione casuale quando il bambino indovina
 const MESSAGGI = [
   'Bravo! Hai indovinato! 🎉',
@@ -29,7 +25,7 @@ const CONFETTI_COLORS = ['#FF6584','#6C63FF','#48BB78','#F6AD55','#63B3ED','#FC8
 // Le due consonanti scelte dal giocatore nella schermata di setup (max 2)
 let selectedConsonants = [];
 
-// Array con le 10 sillabe generate (2 basi × 5 vocali)
+// Array con le 10 sillabe generate (2 consonanti × 5 vocali)
 let syllables          = [];
 
 // La sillaba segreta che il giocatore deve indovinare
@@ -77,24 +73,6 @@ function speak(text) {
   window.speechSynthesis.speak(utt);
 }
 
-// ── Generazione sillabe ────────────────────────────────────────────────────
-
-/**
- * Dato un elemento base (consonante singola o fonema), restituisce le 5 sillabe
- * ottenute combinandolo con le vocali.
- *
- * Caso normale (consonante):  "b" → ["ba","be","bi","bo","bu"]
- * Caso fonema con vocale finale: "gi" termina con "i", quindi:
- *   "gi"+"i" → "gi" (evita "gii"), tutte le altre → "gia","gie","gio","giu"
- *
- * Regola generale: se la base termina già con la vocale corrente, non la appende.
- * @param {string} base - Consonante (es. "b") o fonema (es. "gi")
- * @returns {string[]} Array di 5 sillabe
- */
-function buildSyllables(base) {
-  return VOCALI.map(v => base.endsWith(v) ? base : base + v);
-}
-
 // ── Schermata di setup ─────────────────────────────────────────────────────
 
 /**
@@ -117,28 +95,10 @@ function buildConsonantGrid() {
 }
 
 /**
- * Costruisce la griglia dei pulsanti fonema (es. "GI").
- * I fonemi condividono la stessa logica di selezione delle consonanti:
- * cliccando un fonema si chiama toggleConsonant() con la stringa multi-carattere.
- */
-function buildFonemiGrid() {
-  const grid = document.getElementById('fonemi-grid');
-  grid.innerHTML = '';
-  FONEMI.forEach(f => {
-    const btn = document.createElement('button');
-    btn.className      = 'fonema-btn';
-    btn.textContent    = f.toUpperCase(); // es. "GI"
-    btn.dataset.letter = f;              // stringa usata da toggleConsonant e refreshConsonantGrid
-    btn.addEventListener('click', () => toggleConsonant(f, btn));
-    grid.appendChild(btn);
-  });
-}
-
-/**
- * Seleziona o deseleziona una consonante (o fonema) quando l'utente clicca il suo bottone.
- * Non permette di selezionare più di 2 elementi contemporaneamente.
- * Dopo ogni modifica aggiorna entrambe le griglie e il display delle scelte.
- * @param {string} letter - La consonante/fonema cliccata (es. "b" o "gi")
+ * Seleziona o deseleziona una consonante quando l'utente clicca il suo bottone.
+ * Non permette di selezionare più di 2 consonanti contemporaneamente.
+ * Dopo ogni modifica aggiorna la griglia e il display delle consonanti scelte.
+ * @param {string} letter - La consonante cliccata (minuscola)
  * @param {HTMLElement} btn - Il bottone corrispondente nel DOM
  */
 function toggleConsonant(letter, btn) {
@@ -163,10 +123,9 @@ function toggleConsonant(letter, btn) {
  * (classe 'maxed') e non sono cliccabili.
  */
 function refreshConsonantGrid() {
-  // Aggiorna sia i bottoni consonante che quelli fonema con la stessa logica
-  document.querySelectorAll('.consonant-btn, .fonema-btn').forEach(btn => {
+  document.querySelectorAll('.consonant-btn').forEach(btn => {
     const letter = btn.dataset.letter;
-    // 'full' è true se la selezione è completa E questo elemento non fa parte di essa
+    // 'full' è true se la selezione è completa E questa lettera non fa parte di essa
     const full   = selectedConsonants.length === 2 && !selectedConsonants.includes(letter);
     btn.classList.toggle('maxed', full);
   });
@@ -205,10 +164,12 @@ function refreshSelectedDisplay() {
  * quella misteriosa, resetta lo stato della UI e mostra la schermata di gioco.
  */
 function startGame() {
-  // Genera le 10 sillabe usando buildSyllables(), che gestisce sia le consonanti
-  // semplici (b+a=ba) sia i fonemi (gi+i=gi invece di gii, gi+a=gia, ecc.)
-  // es. B + GI → ba,be,bi,bo,bu, gia,gie,gi,gio,giu
-  syllables = selectedConsonants.flatMap(c => buildSyllables(c));
+  // Genera le 10 sillabe combinando ogni consonante con ogni vocale
+  // es. con B e M → ba, be, bi, bo, bu, ma, me, mi, mo, mu
+  syllables = [];
+  selectedConsonants.forEach(c => {
+    VOCALI.forEach(v => syllables.push(c + v));
+  });
 
   // Sceglie casualmente la sillaba da indovinare tra le 10 generate
   mysterySyllable = syllables[Math.floor(Math.random() * syllables.length)];
@@ -396,7 +357,6 @@ function newGame() {
 function init() {
   initVoices();        // carica la voce italiana per la sintesi vocale
   buildConsonantGrid(); // costruisce la griglia dei bottoni consonante
-  buildFonemiGrid();    // costruisce la griglia dei bottoni fonema (es. "GI")
 
   // Listener sui bottoni fissi dell'HTML (non quelli creati dinamicamente)
   document.getElementById('play-btn').addEventListener('click', startGame);
