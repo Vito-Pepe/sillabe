@@ -33,6 +33,14 @@
          I pulsanti non ancora selezionabili ricevono la classe CSS "maxed". -->
     <div id="consonant-grid" class="consonant-grid"></div>
 
+    <!-- Sezione fonemi: combinazioni di più lettere che producono un suono unico.
+         I bottoni fonema condividono il limite di 2 selezioni con le consonanti.
+         Popolata da buildFonemiGrid() in app.js. -->
+    <div class="fonemi-section">
+      <p class="fonemi-label">Fonemi</p>
+      <div id="fonemi-grid" class="fonemi-grid"></div>
+    </div>
+
     <!-- Disabilitato finché non sono selezionate 2 consonanti;
          al click chiama startGame() in app.js. -->
     <button id="play-btn" class="play-btn" disabled>Gioca!</button>
