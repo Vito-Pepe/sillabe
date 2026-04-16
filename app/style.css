@@ -99,7 +99,18 @@ body {
   gap: 0.5rem;
   justify-content: center;
   max-width: 560px;
-  margin-bottom: 2rem;
+  margin-bottom: 1.2rem;
+}
+
+/* Etichetta "Fonemi" che introduce la seconda griglia (digrafi come SC, GN, GL…).
+   Stile discreto ma leggibile, così non distrae dalla griglia principale. */
+.fonemi-label {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 0.7rem;
 }
 
 /* Bottone consonante: effetto glassmorphism (sfondo traslucido + blur).
@@ -279,19 +290,33 @@ body {
 
 /* ── GIOCO — Griglia sillabe ── */
 
-/* Griglia CSS a 5 colonne: ogni colonna occupa 1 frazione dello spazio disponibile.
-   Risultato: 2 righe × 5 colonne = 10 sillabe totali. */
+/* Contenitore verticale delle righe: una riga per ogni consonante/fonema
+   selezionato. Le righe sono indipendenti e ciascuna centra i propri bottoni,
+   così anche i fonemi con meno sillabe (es. CH=2, GL=4) restano ben allineati. */
 .syllable-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0.7rem;
   width: 100%;
   max-width: 500px;
   margin-bottom: 1.5rem;
 }
 
-/* Stile base di ogni bottone sillaba */
+/* Singola riga di bottoni (una per consonante/fonema). Flex wrap + center
+   fa sì che 2, 4 o 5 bottoni vengano sempre centrati orizzontalmente. */
+.syllable-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+/* Stile base di ogni bottone sillaba.
+   La larghezza fissa (88px) garantisce che i bottoni abbiano tutti la stessa
+   dimensione, indipendentemente dal numero di sillabe nella riga: così BA e
+   SCIA occupano lo stesso spazio e il layout resta ordinato. */
 .syllable-btn {
+  width: 88px;
   padding: 1rem 0;
   font-size: 1.45rem;
   font-weight: 700;
@@ -435,7 +460,8 @@ body {
   .consonant-btn  { width: 48px; height: 48px; font-size: 1.1rem; } /* bottoni consonante più compatti */
   .mystery-box    { width: 110px; height: 110px; }
   .mystery-icon   { font-size: 2.7rem; }
-  .syllable-btn   { font-size: 1.15rem; padding: 0.85rem 0; }
-  .syllable-grid  { gap: 0.45rem; }             /* riduce spazio tra i bottoni sillaba */
+  .syllable-btn   { width: 64px; font-size: 1.15rem; padding: 0.85rem 0; } /* bottoni sillaba più stretti */
+  .syllable-grid  { gap: 0.45rem; }             /* riduce spazio tra le righe sillaba */
+  .syllable-row   { gap: 0.45rem; }             /* riduce spazio tra bottoni nella stessa riga */
   .message        { font-size: 1.2rem; }
 }

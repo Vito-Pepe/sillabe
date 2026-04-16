@@ -7,6 +7,39 @@ const VOCALI = ['a', 'e', 'i', 'o', 'u'];
 // Consonanti disponibili nella griglia di selezione
 const CONSONANTI = ['b', 'c', 'd', 'f', 'g', 'h', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z'];
 
+// Fonemi (digrafi) e le loro sillabe esplicite.
+// A differenza delle consonanti singole, dove la sillaba è semplicemente
+// consonante+vocale, i fonemi hanno regole ortografiche specifiche in italiano
+// e alcuni NON hanno sillabe per tutte e 5 le vocali: includiamo solo
+// combinazioni realmente esistenti nella lingua italiana.
+// La chiave è l'identificativo usato come data-letter nel DOM e nello stato selezionato.
+const FONEMI = {
+  // SC produce /ʃ/: per A/O/U serve la "i" di appoggio; tutte e 5 esistono.
+  sc: ['scia', 'scie', 'sci', 'scio', 'sciu'],
+  // GN produce /ɲ/ con tutte le vocali (gnomo, legna, bagno, agnello, gnu).
+  gn: ['gna', 'gne', 'gni', 'gno', 'gnu'],
+  // GL produce /ʎ/ davanti a I (e con "i" di appoggio per A/E/O): "gliu" non esiste.
+  gl: ['glia', 'glie', 'gli', 'glio'],
+  // CH conserva il suono duro /k/ davanti a E e I: "cha/cho/chu" non sono italiani.
+  ch: ['che', 'chi'],
+  // GH conserva il suono duro /g/ davanti a E e I: "gha/gho/ghu" non esistono.
+  gh: ['ghe', 'ghi'],
+  // QU produce /kw/: "quu" non esiste in italiano.
+  qu: ['qua', 'que', 'qui', 'quo']
+};
+
+/**
+ * Restituisce le 5 sillabe associate a un elemento selezionato (consonante o fonema).
+ * - Per un fonema (es. 'sc') restituisce la lista custom definita in FONEMI.
+ * - Per una consonante singola (es. 'b') combina la consonante con le 5 vocali.
+ * @param {string} item - Chiave in FONEMI oppure una consonante singola
+ * @returns {string[]} Array di 5 sillabe in minuscolo
+ */
+function syllablesFor(item) {
+  if (FONEMI[item]) return FONEMI[item].slice(); // copia per sicurezza
+  return VOCALI.map(v => item + v);
+}
+
 // Messaggi di congratulazioni mostrati a rotazione casuale quando il bambino indovina
 const MESSAGGI = [
   'Bravo! Hai indovinato! 🎉',
@@ -81,17 +114,32 @@ function speak(text) {
  * collegando a ciascuno il listener per toggleConsonant.
  */
 function buildConsonantGrid() {
-  const grid = document.getElementById('consonant-grid');
-  grid.innerHTML = ''; // pulizia preventiva
+  const grid       = document.getElementById('consonant-grid');
+  const fonemiGrid = document.getElementById('fonemi-grid');
+  grid.innerHTML = '';
+  fonemiGrid.innerHTML = '';
 
-  CONSONANTI.forEach(c => {
-    const btn = document.createElement('button');
-    btn.className   = 'consonant-btn';
-    btn.textContent = c.toUpperCase(); // visualizza la lettera maiuscola
-    btn.dataset.letter = c;            // salva la lettera minuscola nel dataset per il confronto
-    btn.addEventListener('click', () => toggleConsonant(c, btn));
-    grid.appendChild(btn);
-  });
+  // Griglia principale: consonanti singole
+  CONSONANTI.forEach(c => grid.appendChild(makeSelectorButton(c)));
+
+  // Griglia secondaria: fonemi (digrafi)
+  Object.keys(FONEMI).forEach(k => fonemiGrid.appendChild(makeSelectorButton(k)));
+}
+
+/**
+ * Crea un singolo bottone di selezione (consonante o fonema) con stile coerente.
+ * Il testo è sempre in maiuscolo per leggibilità, la chiave minuscola viene
+ * salvata nel dataset per il confronto con selectedConsonants.
+ * @param {string} id - Identificativo minuscolo (es. 'b' o 'sc')
+ * @returns {HTMLButtonElement}
+ */
+function makeSelectorButton(id) {
+  const btn = document.createElement('button');
+  btn.className   = 'consonant-btn';
+  btn.textContent = id.toUpperCase();
+  btn.dataset.letter = id;
+  btn.addEventListener('click', () => toggleConsonant(id, btn));
+  return btn;
 }
 
 /**
@@ -164,11 +212,13 @@ function refreshSelectedDisplay() {
  * quella misteriosa, resetta lo stato della UI e mostra la schermata di gioco.
  */
 function startGame() {
-  // Genera le 10 sillabe combinando ogni consonante con ogni vocale
-  // es. con B e M → ba, be, bi, bo, bu, ma, me, mi, mo, mu
+  // Genera le 10 sillabe. Per ogni elemento selezionato (consonante o fonema)
+  // si ottengono 5 sillabe tramite syllablesFor():
+  // - consonante singola 'b' → ba, be, bi, bo, bu
+  // - fonema 'sc'           → scia, scie, sci, scio, sciu
   syllables = [];
-  selectedConsonants.forEach(c => {
-    VOCALI.forEach(v => syllables.push(c + v));
+  selectedConsonants.forEach(item => {
+    syllablesFor(item).forEach(s => syllables.push(s));
   });
 
   // Sceglie casualmente la sillaba da indovinare tra le 10 generate
@@ -200,23 +250,33 @@ function startGame() {
 // ── Griglia delle sillabe ──────────────────────────────────────────────────
 
 /**
- * Costruisce la griglia 5×2 di bottoni sillaba nel DOM.
- * Le prime 5 sillabe (indici 0-4) appartengono alla prima consonante → riga 0 (sfondo azzurro).
- * Le seconde 5 (indici 5-9) appartengono alla seconda consonante → riga 1 (sfondo rosa).
- * La classe CSS row-0/row-1 determina il colore del bottone.
+ * Costruisce la griglia dei bottoni sillaba nel DOM, organizzandola in due
+ * righe indipendenti: una per ciascuna consonante/fonema selezionato.
+ * Questo approccio gestisce correttamente anche i fonemi che non producono
+ * tutte e 5 le sillabe (es. GL=4, CH=2, GH=2, QU=4) mantenendo ogni gruppo
+ * allineato e visivamente distinto dall'altro tramite le classi row-0/row-1.
  */
 function buildSyllableGrid() {
   const grid = document.getElementById('syllable-grid');
   grid.innerHTML = ''; // svuota la griglia precedente
 
-  syllables.forEach((syl, idx) => {
-    const btn = document.createElement('button');
-    const row = Math.floor(idx / 5); // 0 per le prime 5 sillabe, 1 per le seconde 5
-    btn.className   = `syllable-btn row-${row}`;
-    btn.textContent = syl.toUpperCase(); // visualizza la sillaba in maiuscolo
-    btn.dataset.syllable = syl;
-    btn.addEventListener('click', () => onSyllableClick(syl, btn));
-    grid.appendChild(btn);
+  // Una riga flex per ogni elemento scelto; dentro ogni riga un bottone per
+  // ogni sillaba realmente esistente. I colori di sfondo (row-0 azzurro,
+  // row-1 rosa) si mantengono coerenti con la consonante di provenienza.
+  selectedConsonants.forEach((item, itemIdx) => {
+    const row = document.createElement('div');
+    row.className = 'syllable-row';
+
+    syllablesFor(item).forEach(syl => {
+      const btn = document.createElement('button');
+      btn.className   = `syllable-btn row-${itemIdx}`;
+      btn.textContent = syl.toUpperCase();
+      btn.dataset.syllable = syl;
+      btn.addEventListener('click', () => onSyllableClick(syl, btn));
+      row.appendChild(btn);
+    });
+
+    grid.appendChild(row);
   });
 }
 
