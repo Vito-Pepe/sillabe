@@ -145,6 +145,7 @@ body {
 
 /* Bottone arrotondato (pill) con sfondo rosa/corallo acceso.
    Disabilitato di default finché non sono scelte 2 consonanti. */
+<<<<<<< HEAD
 /* ── SETUP — Sezione fonemi ── */
 
 /* Contenitore della sezione fonemi: separato visivamente dal gruppo consonanti
@@ -214,6 +215,8 @@ body {
   cursor: not-allowed;
 }
 
+=======
+>>>>>>> ad6c95d (modified nginx)
 .play-btn {
   padding: 1rem 3.5rem;
   font-size: 1.35rem;
