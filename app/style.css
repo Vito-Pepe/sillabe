@@ -1,31 +1,38 @@
+/* Reset universale: elimina margin/padding di default del browser e
+   forza il box-sizing a border-box (padding e border inclusi nella dimensione) */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* Layout base del body: gradiente viola diagonale come sfondo,
+   fullscreen verticale, centrato orizzontalmente con flexbox */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-start;    /* allinea al top, non al centro verticale */
   justify-content: center;
-  overflow-x: hidden;
+  overflow-x: hidden;          /* evita scrollbar orizzontale su mobile */
 }
 
-/* ── SCREENS ── */
+/* ── SCHERMATE ── */
+
+/* Ogni schermata (.screen) è nascosta di default con display:none.
+   Solo quella con la classe "active" viene mostrata come colonna flex. */
 .screen {
   display: none;
   width: 100%;
-  max-width: 680px;
+  max-width: 680px;         /* limita la larghezza su desktop */
   padding: 2rem 1.5rem 3rem;
   flex-direction: column;
   align-items: center;
 }
 .screen.active { display: flex; }
 
-/* ── SETUP ── */
+/* ── SETUP — Titolo e sottotitolo ── */
 .title {
   font-size: 3rem;
   font-weight: 800;
@@ -40,12 +47,18 @@ body {
   margin-bottom: 1.8rem;
 }
 
+/* ── SETUP — Display delle consonanti selezionate ── */
+
+/* Contenitore flex per i due riquadri consonante separati dal simbolo "+" */
 .selected-display {
   display: flex;
   align-items: center;
   gap: 0.8rem;
   margin-bottom: 1.6rem;
 }
+
+/* Riquadro singolo consonante: bianco con bordi arrotondati e ombra.
+   Quando è pieno (lettera selezionata) mostra il colore viola #6C63FF. */
 .selected-cons {
   width: 72px;
   height: 72px;
@@ -60,17 +73,26 @@ body {
   box-shadow: 0 6px 20px rgba(0,0,0,0.15);
   transition: transform 0.2s, box-shadow 0.2s;
 }
+
+/* Stato "vuoto": sfondo semi-trasparente e testo color lilla chiaro
+   per comunicare che lo slot è disponibile ma non ancora riempito */
 .selected-cons.empty {
   color: #c0b8ff;
   background: rgba(255,255,255,0.3);
   box-shadow: none;
 }
+
+/* Simbolo "+" tra i due riquadri consonante */
 .selected-sep {
   font-size: 2rem;
   color: rgba(255,255,255,0.7);
   font-weight: 300;
 }
 
+/* ── SETUP — Griglia consonanti ── */
+
+/* Griglia flex wrappata: i bottoni vanno a capo automaticamente.
+   Dimensione massima calibrata per 7-8 bottoni per riga su desktop. */
 .consonant-grid {
   display: flex;
   flex-wrap: wrap;
@@ -79,6 +101,9 @@ body {
   max-width: 560px;
   margin-bottom: 2rem;
 }
+
+/* Bottone consonante: effetto glassmorphism (sfondo traslucido + blur).
+   Sfondo bianco ghost, bordo bianco opaco, testo bianco. */
 .consonant-btn {
   width: 58px;
   height: 58px;
@@ -90,13 +115,17 @@ body {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);          /* sfocatura dello sfondo sotto il bottone */
+  -webkit-backdrop-filter: blur(6px);  /* prefisso per Safari */
 }
+
+/* Hover: sfondo leggermente più opaco e leggero sollevamento verticale */
 .consonant-btn:hover:not(.maxed) {
   background: rgba(255,255,255,0.32);
   transform: translateY(-2px);
 }
+
+/* Stato selezionato: sfondo bianco pieno con testo viola, effetto "active" */
 .consonant-btn.selected {
   background: #fff;
   color: #6C63FF;
@@ -104,11 +133,18 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   transform: translateY(-3px);
 }
+
+/* Stato "maxed": le consonanti non selezionabili (quando 2 sono già scelte)
+   diventano semitrasparenti e mostrano il cursore "non permesso" */
 .consonant-btn.maxed {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
+/* ── SETUP — Pulsante Gioca! ── */
+
+/* Bottone arrotondato (pill) con sfondo rosa/corallo acceso.
+   Disabilitato di default finché non sono scelte 2 consonanti. */
 .play-btn {
   padding: 1rem 3.5rem;
   font-size: 1.35rem;
@@ -116,7 +152,7 @@ body {
   background: #FF6584;
   color: #fff;
   border: none;
-  border-radius: 50px;
+  border-radius: 50px; /* forma a pillola */
   cursor: pointer;
   box-shadow: 0 6px 22px rgba(255,101,132,0.45);
   transition: all 0.2s;
@@ -131,7 +167,9 @@ body {
   cursor: not-allowed;
 }
 
-/* ── GAME ── */
+/* ── GIOCO — Barra superiore ── */
+
+/* Flex row con bottone "Cambia" a sinistra e label consonanti a destra */
 .game-topbar {
   width: 100%;
   display: flex;
@@ -139,6 +177,8 @@ body {
   gap: 1rem;
   margin-bottom: 0.8rem;
 }
+
+/* Bottone "← Cambia": stile ghost bianco, bordi arrotondati */
 .back-btn {
   background: rgba(255,255,255,0.2);
   border: 2px solid rgba(255,255,255,0.45);
@@ -149,10 +189,12 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   transition: all 0.18s;
-  white-space: nowrap;
+  white-space: nowrap; /* evita che il testo vada a capo */
 }
 .back-btn:hover { background: rgba(255,255,255,0.3); }
 
+/* Label "B + M" mostrata accanto al bottone Cambia;
+   uppercase e spaziatura per evidenziare le consonanti attive */
 .game-subtitle {
   color: rgba(255,255,255,0.9);
   font-size: 1rem;
@@ -161,12 +203,15 @@ body {
   text-transform: uppercase;
 }
 
+/* Titolo principale della schermata di gioco */
 .game-title {
   font-size: 1.9rem;
   font-weight: 800;
   color: #fff;
   margin-bottom: 0.3rem;
 }
+
+/* Istruzione in testo piccolo sotto il titolo */
 .game-hint {
   color: rgba(255,255,255,0.8);
   font-size: 0.95rem;
@@ -175,9 +220,13 @@ body {
   max-width: 400px;
 }
 
-/* ── MYSTERY BOX ── */
+/* ── GIOCO — Mystery box ── */
+
 .mystery-area { margin-bottom: 1.8rem; }
 
+/* Il grande bottone bianco centrale con il "?".
+   Anima continuamente con l'effetto pulse per attirare l'attenzione.
+   All'hover l'animazione si ferma e il bottone si ingrandisce leggermente. */
 .mystery-box {
   width: 130px;
   height: 130px;
@@ -191,12 +240,15 @@ body {
   justify-content: center;
   gap: 0.2rem;
   box-shadow: 0 10px 35px rgba(0,0,0,0.22);
-  animation: pulse 2.2s ease-in-out infinite;
+  animation: pulse 2.2s ease-in-out infinite; /* pulsazione continua */
   transition: transform 0.15s, box-shadow 0.15s;
 }
+/* Hover: interrompe il pulse e fa un leggero zoom */
 .mystery-box:hover { animation: none; transform: scale(1.06); }
+/* Click/tap: leggero "affossamento" per feedback tattile */
 .mystery-box:active { transform: scale(0.97); }
 
+/* Icona grande (? o sillaba rivelata) all'interno della mystery box */
 .mystery-icon {
   font-size: 3.4rem;
   font-weight: 800;
@@ -204,6 +256,8 @@ body {
   line-height: 1;
   transition: color 0.3s;
 }
+
+/* Etichetta "Ascolta" sotto l'icona: testo piccolo grigio */
 .mystery-label {
   font-size: 0.78rem;
   font-weight: 600;
@@ -212,15 +266,21 @@ body {
   text-transform: uppercase;
 }
 
+/* Stato "revealed": dopo che il giocatore indovina, la box diventa verde.
+   L'animazione "celebrate" fa apparire la box con un effetto bounce-in. */
 .mystery-box.revealed {
   border: 4px solid #48BB78;
-  animation: celebrate 0.5s ease forwards;
+  animation: celebrate 0.5s ease forwards; /* sovrascrive il pulse */
   box-shadow: 0 10px 35px rgba(72,187,120,0.35);
 }
+/* Icona ed etichetta diventano verde quando la sillaba è rivelata */
 .mystery-box.revealed .mystery-icon { color: #48BB78; }
 .mystery-box.revealed .mystery-label { color: #48BB78; }
 
-/* ── SYLLABLE GRID ── */
+/* ── GIOCO — Griglia sillabe ── */
+
+/* Griglia CSS a 5 colonne: ogni colonna occupa 1 frazione dello spazio disponibile.
+   Risultato: 2 righe × 5 colonne = 10 sillabe totali. */
 .syllable-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -229,6 +289,8 @@ body {
   max-width: 500px;
   margin-bottom: 1.5rem;
 }
+
+/* Stile base di ogni bottone sillaba */
 .syllable-btn {
   padding: 1rem 0;
   font-size: 1.45rem;
@@ -240,36 +302,50 @@ body {
   box-shadow: 0 3px 10px rgba(0,0,0,0.1);
   letter-spacing: 0.5px;
 }
+/* Hover: si solleva e l'ombra si allunga per effetto "lifting" */
 .syllable-btn:hover:not(:disabled) {
   transform: translateY(-4px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
 }
+/* Click/tap: leggero ritorno verso il basso */
 .syllable-btn:active:not(:disabled) { transform: translateY(-1px); }
 
-/* row 1 */
+/* Riga 0 (prima consonante): azzurro chiaro — differenzia visivamente le due consonanti */
 .syllable-btn.row-0 { background: #dbeafe; color: #1e40af; }
 .syllable-btn.row-0:hover:not(:disabled) { background: #bfdbfe; }
-/* row 2 */
+
+/* Riga 1 (seconda consonante): rosa chiaro */
 .syllable-btn.row-1 { background: #fce7f3; color: #9d174d; }
 .syllable-btn.row-1:hover:not(:disabled) { background: #fbcfe8; }
 
+/* Stato "correct": verde brillante con zoom 1.12 per celebrare la risposta giusta.
+   !important necessario per sovrascrivere gli stili row-0/row-1. */
 .syllable-btn.correct {
   background: #48BB78 !important;
   color: #fff !important;
   transform: scale(1.12) !important;
   box-shadow: 0 6px 22px rgba(72,187,120,0.45) !important;
 }
+
+/* Stato "wrong": grigio sbiadito con testo barrato.
+   Il bottone viene anche disabilitato via JS, quindi cursor: not-allowed. */
 .syllable-btn.wrong {
   background: #e5e7eb !important;
   color: #9ca3af !important;
-  text-decoration: line-through;
+  text-decoration: line-through; /* barra il testo per chiarire che è sbagliato */
   transform: none !important;
   box-shadow: none !important;
   cursor: not-allowed;
 }
+
+/* Classe temporanea aggiunta al click sbagliato: attiva l'animazione "shake".
+   Viene rimossa dopo 500ms da JS (durata dell'animazione). */
 .syllable-btn.shake { animation: shake 0.45s ease; }
 
-/* ── WIN MESSAGE ── */
+/* ── GIOCO — Messaggio di vittoria ── */
+
+/* Pannello bianco con testo viola che appare con animazione bounce-in.
+   La classe "hidden" (display:none) viene rimossa da showWinMessage() in JS. */
 .message {
   text-align: center;
   padding: 1.1rem 2rem;
@@ -279,11 +355,14 @@ body {
   font-weight: 700;
   color: #6C63FF;
   box-shadow: 0 6px 28px rgba(0,0,0,0.14);
+  /* cubic-bezier con overshoot (1.56) per effetto "bouncy" */
   animation: celebrate 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards;
   margin-bottom: 1rem;
 }
 .message.hidden { display: none; }
 
+/* Bottone "Ancora!": verde, pill, appare dopo la vittoria.
+   Al click lancia una nuova partita con le stesse consonanti. */
 .new-game-btn {
   padding: 0.85rem 2.8rem;
   font-size: 1.15rem;
@@ -300,44 +379,63 @@ body {
 .new-game-btn:hover { transform: translateY(-3px); }
 .new-game-btn.hidden { display: none; }
 
-/* ── CONFETTI ── */
+/* ── CORIANDOLI ── */
+
+/* Ogni pezzo di coriandolo è posizionato in modo fisso rispetto alla viewport
+   (inizia a -12px sopra il bordo). pointer-events:none evita che blocchi i click.
+   z-index:999 lo mette sopra tutti gli altri elementi. */
 .confetti-piece {
   position: fixed;
   top: -12px;
   border-radius: 3px;
   pointer-events: none;
   z-index: 999;
-  animation: confettiFall linear forwards;
+  animation: confettiFall linear forwards; /* durata e ritardo assegnati da JS */
 }
 
-/* ── ANIMATIONS ── */
+/* ── ANIMAZIONI CSS ── */
+
+/* pulse: fa pulsare la mystery box con leggero zoom e cambio di ombra.
+   Usata per attirare l'attenzione del bambino sul bottone da cliccare. */
 @keyframes pulse {
   0%, 100% { transform: scale(1);    box-shadow: 0 10px 35px rgba(0,0,0,0.22); }
   50%       { transform: scale(1.05); box-shadow: 0 14px 40px rgba(108,99,255,0.28); }
 }
+
+/* celebrate: effetto "pop" bounce-in. Partenza piccola e invisibile (scale 0.4, opacity 0),
+   overshoots fino a 1.18 e poi si assesta a 1. Usato per mystery-box e messaggio vittoria. */
 @keyframes celebrate {
   0%   { transform: scale(0.4); opacity: 0; }
   65%  { transform: scale(1.18); opacity: 1; }
   100% { transform: scale(1);   opacity: 1; }
 }
+
+/* shake: tremolio orizzontale sinistra-destra per indicare risposta sbagliata.
+   4 spostamenti in 450ms per una vibrazione rapida e visibile. */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20%, 60%  { transform: translateX(-9px); }
   40%, 80%  { transform: translateX(9px); }
 }
+
+/* confettiFall: i pezzi cadono dall'alto (top: -12px) fino a 105vh (sotto il viewport)
+   ruotando di 720° (due giri completi). Svaniscono gradualmente nella parte finale (da 80%). */
 @keyframes confettiFall {
   from { transform: translateY(0)     rotate(0deg);   opacity: 1; }
   80%  {                                               opacity: 1; }
   to   { transform: translateY(105vh) rotate(720deg); opacity: 0; }
 }
 
-/* ── RESPONSIVE ── */
+/* ── RESPONSIVE — Mobile (max 480px) ── */
+
+/* Su schermi piccoli si riduce la dimensione dei font e dei bottoni
+   per adattarsi senza scrollbar orizzontali */
 @media (max-width: 480px) {
-  .title          { font-size: 2.2rem; }
-  .consonant-btn  { width: 48px; height: 48px; font-size: 1.1rem; }
+  .title          { font-size: 2.2rem; }        /* titolo più piccolo */
+  .consonant-btn  { width: 48px; height: 48px; font-size: 1.1rem; } /* bottoni consonante più compatti */
   .mystery-box    { width: 110px; height: 110px; }
   .mystery-icon   { font-size: 2.7rem; }
   .syllable-btn   { font-size: 1.15rem; padding: 0.85rem 0; }
-  .syllable-grid  { gap: 0.45rem; }
+  .syllable-grid  { gap: 0.45rem; }             /* riduce spazio tra i bottoni sillaba */
   .message        { font-size: 1.2rem; }
 }

@@ -2,51 +2,91 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <!-- Garantisce rendering corretto su dispositivi mobile e tablet -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sillabe</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- SCHERMATA SELEZIONE -->
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SCHERMATA 1 — SELEZIONE CONSONANTI
+       Visibile all'avvio (classe "active"). Il giocatore sceglie due
+       consonanti; il pulsante "Gioca!" si sblocca solo quando ne sono
+       selezionate esattamente due. La griglia dei bottoni è generata
+       dinamicamente da buildConsonantGrid() in app.js.
+  ═══════════════════════════════════════════════════════════════════════ -->
   <div id="setup-screen" class="screen active">
     <h1 class="title">Sillabe</h1>
     <p class="subtitle">Scegli due consonanti per iniziare</p>
 
+    <!-- Riquadri che mostrano in tempo reale le consonanti scelte;
+         aggiornati da refreshSelectedDisplay(). Quando vuoti mostrano '?'
+         con stile semi-trasparente (classe CSS "empty"). -->
     <div class="selected-display">
       <div id="cons1" class="selected-cons empty">?</div>
       <div class="selected-sep">+</div>
       <div id="cons2" class="selected-cons empty">?</div>
     </div>
 
+    <!-- Griglia dei pulsanti consonante; popolata da buildConsonantGrid().
+         I pulsanti non ancora selezionabili ricevono la classe CSS "maxed". -->
     <div id="consonant-grid" class="consonant-grid"></div>
 
+    <!-- Disabilitato finché non sono selezionate 2 consonanti;
+         al click chiama startGame() in app.js. -->
     <button id="play-btn" class="play-btn" disabled>Gioca!</button>
   </div>
 
-  <!-- SCHERMATA DI GIOCO -->
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SCHERMATA 2 — GIOCO
+       Nascosta di default (nessuna classe "active"). Viene mostrata da
+       startGame() e nascosta da backToSetup(). Contiene la mystery box
+       e la griglia delle sillabe da indovinare.
+  ═══════════════════════════════════════════════════════════════════════ -->
   <div id="game-screen" class="screen">
+
+    <!-- Barra superiore: freccia per tornare al setup + consonanti in uso -->
     <div class="game-topbar">
+      <!-- ← Cambia: riporta alla schermata di setup senza resettare le consonanti -->
       <button id="back-btn" class="back-btn">&#8592; Cambia</button>
+      <!-- Testo tipo "B + M" aggiornato da startGame() -->
       <span id="game-subtitle" class="game-subtitle"></span>
     </div>
 
     <h2 class="game-title">Indovina la sillaba!</h2>
     <p class="game-hint">Clicca il punto interrogativo per ascoltarla, poi scegli quella giusta</p>
 
+    <!-- Mystery box: bottone che pronuncia la sillaba segreta al click.
+         Mostra "?" finché il giocatore non indovina; poi rivela la sillaba
+         e riceve la classe CSS "revealed" (bordo verde, animazione celebrate).
+         L'animazione "pulse" fa pulsare il bottone continuamente. -->
     <div class="mystery-area">
       <button id="mystery-box" class="mystery-box" title="Ascolta la sillaba misteriosa">
+        <!-- Icona grande: "?" all'inizio, poi la sillaba corretta dopo la vittoria -->
         <span id="mystery-icon" class="mystery-icon">?</span>
+        <!-- Etichetta testuale sotto l'icona -->
         <span class="mystery-label">Ascolta</span>
       </button>
     </div>
 
+    <!-- Griglia 5×2 dei pulsanti sillaba; costruita dinamicamente da
+         buildSyllableGrid(). Riga 0 (blu) = prima consonante, riga 1 (rosa)
+         = seconda consonante. Il click chiama onSyllableClick(). -->
     <div id="syllable-grid" class="syllable-grid"></div>
 
+    <!-- Pannello di congratulazioni: nascosto (classe "hidden") finché il
+         giocatore non indovina; mostrato da showWinMessage() con animazione
+         "celebrate". Il testo viene scelto casualmente da MESSAGGI in app.js. -->
     <div id="message" class="message hidden"></div>
+
+    <!-- Bottone per rilanciare una partita con le stesse consonanti;
+         nascosto fino alla vittoria, mostrato da showWinMessage(). -->
     <button id="new-game-btn" class="new-game-btn hidden">Ancora!</button>
   </div>
 
+  <!-- Contenitore fisso per i coriandoli CSS generati da launchConfetti().
+       Gli elementi .confetti-piece vengono inseriti e poi rimossi dopo 3,5s. -->
   <div id="confetti-container"></div>
 
   <script src="app.js"></script>
