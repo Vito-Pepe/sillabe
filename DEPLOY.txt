@@ -1,0 +1,427 @@
+================================================================================
+  GUIDA AL DEPLOY — App Sillabe su Raspberry Pi 5
+  Via SSH: prima installazione e aggiornamenti
+================================================================================
+
+INDICE
+  1. Cosa ti serve prima di iniziare
+  2. Trovare l'indirizzo IP del Raspberry Pi
+  3. Connettersi via SSH
+  4. Verificare Docker e controllare le porte già in uso
+  5. Caricare il codice sul Raspberry Pi
+  6. Avviare l'app
+  7. Verificare che tutto funzioni
+  8. Aggiornare l'app quando ci sono novità
+  9. Comandi utili di gestione
+  10. Risoluzione problemi comuni
+
+
+================================================================================
+  1. COSA TI SERVE PRIMA DI INIZIARE
+================================================================================
+
+Sul tuo Mac / PC:
+  - Terminale (su Mac si trova in Applicazioni > Utility > Terminale)
+  - Il codice dell'app in una cartella locale (già ce l'hai)
+  - Opzionale ma consigliato: un account GitHub per ospitare il codice
+
+Sul Raspberry Pi:
+  - Raspberry Pi OS installato (versione 64-bit consigliata)
+  - Connesso alla stessa rete Wi-Fi o via cavo Ethernet
+  - SSH abilitato (vedi nota qui sotto)
+
+NOTA — Come abilitare SSH sul Raspberry Pi:
+  Se hai un monitor collegato al Pi, apri il terminale e digita:
+      sudo raspi-config
+  Vai su: Interface Options > SSH > Enable
+  In alternativa, quando scrivi la scheda SD con Raspberry Pi Imager,
+  nella sezione "Impostazioni avanzate" puoi abilitare SSH direttamente.
+
+
+================================================================================
+  2. TROVARE L'INDIRIZZO IP DEL RASPBERRY PI
+================================================================================
+
+Metodo A — dal Raspberry Pi stesso (se hai un monitor collegato):
+  Apri il terminale del Pi e digita:
+      hostname -I
+  Vedrai qualcosa tipo: 192.168.1.42
+  Quel numero è il tuo indirizzo IP locale.
+
+Metodo B — dal router:
+  Apri il browser e vai all'interfaccia del tuo router
+  (solitamente http://192.168.1.1 oppure http://192.168.0.1)
+  Cerca nella lista dei dispositivi connessi "raspberrypi".
+
+Metodo C — scansione di rete dal Mac:
+  Apri il Terminale sul Mac e digita:
+      arp -a | grep -i raspberry
+  oppure installa e usa nmap:
+      brew install nmap
+      nmap -sn 192.168.1.0/24
+  (sostituisci 192.168.1 con il prefisso della tua rete se diverso)
+
+CONSIGLIO: Assegna un IP fisso al Raspberry Pi dal tuo router
+  (funzione "DHCP reservation" o "IP statico") così l'indirizzo
+  non cambia mai al riavvio.
+
+
+================================================================================
+  3. CONNETTERSI VIA SSH
+================================================================================
+
+Dal terminale del tuo Mac / PC digita:
+
+    ssh pi@192.168.1.42
+
+  Sostituisci 192.168.1.42 con l'IP del tuo Pi.
+  L'utente di default è "pi". Se hai scelto un nome utente diverso
+  durante la configurazione, usa quello.
+
+La prima volta ti verrà chiesto di confermare l'identità del Pi:
+    Are you sure you want to continue connecting? (yes/no)
+  Digita: yes  poi premi Invio.
+
+Poi ti chiederà la password (di default è "raspberry", ma se l'hai
+cambiata durante il setup usa quella).
+
+Quando sei connesso vedrai il prompt cambiare in:
+    pi@raspberrypi:~$
+  Da questo momento stai operando sul Raspberry Pi.
+
+CONSIGLIO SICUREZZA: Cambia subito la password di default con:
+    passwd
+
+
+================================================================================
+  4. VERIFICARE DOCKER E CONTROLLARE LE PORTE GIA' IN USO
+================================================================================
+
+Docker è già installato sul tuo Pi. Fai solo questi controlli
+prima di avviare l'app Sillabe.
+
+--- Passo 4.1 — Verifica la versione di Docker ---
+
+    docker --version
+    docker compose version
+
+  Se "docker compose" non viene riconosciuto, prova con:
+      docker-compose --version
+  e in quel caso usa "docker-compose" (con il trattino) al posto
+  di "docker compose" in tutti i comandi di questa guida.
+
+--- Passo 4.2 — Controlla i container già attivi ---
+
+    docker ps
+
+  Vedrai la lista dei container in esecuzione con le porte che
+  stanno usando. Prendi nota delle porte nella colonna "PORTS".
+
+--- Passo 4.3 — Controlla se la porta 80 è libera ---
+
+  L'app Sillabe usa di default la porta 80. Verifica che non
+  sia già occupata da un altro container o servizio:
+
+    sudo ss -tlnp | grep ':80'
+
+  Se il comando non restituisce nulla, la porta 80 è libera.
+
+  Se invece appare qualcosa (es. nginx, apache, o un altro
+  container Docker), devi usare una porta diversa per Sillabe.
+  In quel caso apri il file docker-compose.yml e cambia la riga:
+
+    ports:
+      - "80:80"       ← cambia il primo numero (es. "8081:80")
+
+  Scegli un numero non in uso, ad esempio 8081, 8082, ecc.
+  L'app sarà poi raggiungibile su http://IP-DEL-PI:8081
+
+--- Passo 4.4 — Verifica che Git sia installato ---
+
+    git --version
+
+  Se non è installato:
+      sudo apt install -y git
+
+
+================================================================================
+  5. CARICARE IL CODICE SUL RASPBERRY PI
+================================================================================
+
+Hai due opzioni:
+
+══════════════════════════════════════════════════════════════════
+  OPZIONE A — Tramite GitHub (consigliata, necessaria per
+              gli aggiornamenti futuri)
+══════════════════════════════════════════════════════════════════
+
+  Sul tuo Mac, metti il codice su GitHub:
+    1. Vai su github.com e crea un nuovo repository (es. "sillabe")
+    2. Nel terminale del Mac, dalla cartella del progetto:
+           cd /percorso/alla/tua/cartella/testinvaders
+           git init
+           git add .
+           git commit -m "primo commit"
+           git remote add origin https://github.com/TUO-UTENTE/sillabe.git
+           git push -u origin main
+
+  Sul Raspberry Pi (via SSH), clona il repository:
+
+    cd ~
+    git clone https://github.com/TUO-UTENTE/sillabe.git
+    cd sillabe/sillabe
+
+  Ora sei nella cartella giusta con tutti i file.
+
+══════════════════════════════════════════════════════════════════
+  OPZIONE B — Copia diretta con scp (senza GitHub)
+══════════════════════════════════════════════════════════════════
+
+  Dal terminale del Mac (NON da SSH), copia i file con scp:
+
+    scp -r /percorso/alla/tua/cartella/testinvaders/sillabe \
+        pi@192.168.1.42:~/sillabe
+
+  Sul Raspberry Pi entra nella cartella:
+
+    ssh pi@192.168.1.42
+    cd ~/sillabe
+
+  ATTENZIONE: con questa opzione gli aggiornamenti andranno
+  copiati manualmente ogni volta con scp. Preferisci l'Opzione A.
+
+
+================================================================================
+  6. AVVIARE L'APP
+================================================================================
+
+Assicurati di essere nella cartella giusta (quella che contiene
+Dockerfile, docker-compose.yml, ecc.):
+
+    cd ~/sillabe/sillabe      # se hai usato GitHub (Opzione A)
+    oppure
+    cd ~/sillabe              # se hai usato scp (Opzione B)
+
+Costruisci e avvia l'app:
+
+    docker compose up --build -d
+
+  --build  = ricostruisce l'immagine (necessario la prima volta)
+  -d       = avvia in background (detached mode)
+
+La prima volta ci vorranno alcuni minuti per scaricare nginx
+e costruire l'immagine. Le volte successive sarà molto più veloce.
+
+Quando il comando finisce senza errori, l'app è attiva.
+
+
+================================================================================
+  7. VERIFICARE CHE TUTTO FUNZIONI
+================================================================================
+
+--- Dal Raspberry Pi stesso ---
+
+  Controlla che il container stia girando:
+      docker ps
+
+  Dovresti vedere una riga con "sillabe" e stato "Up".
+
+  Prova ad aprire l'app localmente:
+      curl -I http://localhost
+  Dovresti vedere: HTTP/1.1 200 OK
+
+--- Da un altro dispositivo sulla stessa rete ---
+
+  Apri il browser sul tuo Mac / telefono e vai su:
+      http://192.168.1.42
+  (usa l'IP del tuo Raspberry Pi)
+
+  Dovresti vedere l'app Sillabe pronta all'uso!
+
+--- Guardare i log in tempo reale ---
+
+  Se qualcosa non va, guarda i log del container:
+      docker compose logs -f
+
+  Per uscire dai log premi CTRL + C.
+
+
+================================================================================
+  8. AGGIORNARE L'APP QUANDO CI SONO NOVITÀ
+================================================================================
+
+Quando hai modificato il codice sul Mac e vuoi portare le
+modifiche sul Raspberry Pi, segui questi passi.
+
+══════════════════════════════════════════════════════════════════
+  CON GITHUB (Opzione A — consigliata)
+══════════════════════════════════════════════════════════════════
+
+  PASSO 1 — Sul Mac: salva e pubblica le modifiche
+
+    cd /percorso/alla/tua/cartella/testinvaders
+    git add .
+    git commit -m "descrizione delle modifiche"
+    git push
+
+  PASSO 2 — Sul Raspberry Pi via SSH: scarica e riavvia
+
+    ssh pi@192.168.1.42
+    cd ~/sillabe/sillabe
+    ./update.sh
+
+  Lo script update.sh fa tutto in automatico:
+    - Scarica le ultime modifiche da GitHub (git pull)
+    - Ricostruisce l'immagine Docker con le novità
+    - Riavvia il container
+    - Rimuove le immagini vecchie per liberare spazio
+
+  In alternativa allo script, puoi usare il Makefile:
+    make update
+
+══════════════════════════════════════════════════════════════════
+  SENZA GITHUB (Opzione B — copia manuale)
+══════════════════════════════════════════════════════════════════
+
+  PASSO 1 — Dal Mac, copia i file aggiornati:
+
+    scp -r /percorso/testinvaders/sillabe/app \
+        pi@192.168.1.42:~/sillabe/app
+
+  PASSO 2 — Sul Raspberry Pi via SSH, ricostruisci:
+
+    ssh pi@192.168.1.42
+    cd ~/sillabe
+    docker compose up --build -d
+
+══════════════════════════════════════════════════════════════════
+  AGGIORNAMENTI AUTOMATICI (opzionale — solo con GitHub + registry)
+══════════════════════════════════════════════════════════════════
+
+  Se vuoi che il Pi aggiorni l'app da solo senza intervento
+  manuale, puoi abilitare Watchtower. Apri docker-compose.yml
+  e togli i commenti dalla sezione "watchtower".
+  Questo richiede che l'immagine sia pubblicata su Docker Hub.
+  Per la maggior parte dei casi lo script manuale è sufficiente.
+
+
+================================================================================
+  9. COMANDI UTILI DI GESTIONE
+================================================================================
+
+Tutti i comandi vanno eseguiti da SSH, nella cartella del progetto
+(~/sillabe/sillabe oppure ~/sillabe).
+
+  Avviare l'app:
+      make up
+      oppure: docker compose up --build -d
+
+  Fermare l'app:
+      make down
+      oppure: docker compose down
+
+  Vedere lo stato dei container:
+      docker ps
+
+  Vedere i log in tempo reale:
+      make logs
+      oppure: docker compose logs -f sillabe
+
+  Riavviare il container senza ricostruire:
+      docker compose restart
+
+  Aggiornare (git pull + rebuild):
+      make update
+      oppure: ./update.sh
+
+  Liberare spazio (immagini inutilizzate):
+      docker image prune -f
+
+  Entrare dentro il container per debug:
+      make shell
+      oppure: docker compose exec sillabe sh
+
+  Vedere quanto spazio usa Docker:
+      docker system df
+
+  Riavviare il Raspberry Pi:
+      sudo reboot
+
+  Spegnere il Raspberry Pi:
+      sudo shutdown -h now
+
+
+================================================================================
+  10. RISOLUZIONE PROBLEMI COMUNI
+================================================================================
+
+PROBLEMA: "Permission denied" quando eseguo docker
+  SOLUZIONE: Il tuo utente non è nel gruppo docker. Esegui:
+      sudo usermod -aG docker $USER
+  Poi disconnettiti e riconnettiti via SSH.
+
+PROBLEMA: La porta 80 è già in uso
+  SOLUZIONE: Qualcos'altro sta usando la porta 80 sul Pi.
+  Modifica docker-compose.yml e cambia "80:80" in "8080:80",
+  poi accedi all'app su http://192.168.1.42:8080
+
+PROBLEMA: L'app non si apre dal browser
+  SOLUZIONE 1: Verifica che il container sia attivo con: docker ps
+  SOLUZIONE 2: Controlla i log con: docker compose logs
+  SOLUZIONE 3: Verifica che stai usando l'IP giusto del Pi
+  SOLUZIONE 4: Controlla che il firewall non blocchi la porta 80:
+      sudo ufw status
+      sudo ufw allow 80/tcp   (se il firewall è attivo)
+
+PROBLEMA: "git pull" dice "Already up to date" ma le modifiche
+          non appaiono nell'app
+  SOLUZIONE: Devi ricostruire l'immagine Docker dopo il pull:
+      docker compose up --build -d
+  Il semplice git pull aggiorna i file ma non ricostruisce
+  l'immagine. Lo script update.sh fa entrambe le cose.
+
+PROBLEMA: Il build è lento
+  SOLUZIONE: È normale la prima volta. Le volte successive
+  Docker usa la cache e va molto più veloce.
+
+PROBLEMA: Dopo il riavvio del Pi l'app non parte
+  SOLUZIONE: Verifica che il container abbia restart: unless-stopped
+  in docker-compose.yml (già configurato). Se manca, aggiungi:
+      restart: unless-stopped
+  Poi ricrea il container con: docker compose up -d --force-recreate
+
+PROBLEMA: Non riesco a connettermi via SSH
+  SOLUZIONE 1: Verifica che il Pi sia acceso e connesso alla rete
+  SOLUZIONE 2: Verifica l'IP con uno dei metodi del punto 2
+  SOLUZIONE 3: Verifica che SSH sia abilitato (punto 1)
+  SOLUZIONE 4: Prova con sudo davanti: sudo ssh pi@192.168.1.42
+
+
+================================================================================
+  RIEPILOGO RAPIDO — Primo deploy
+================================================================================
+
+  1.  ssh pi@192.168.1.42
+  2.  docker ps                           ← controlla le porte in uso
+  3.  sudo ss -tlnp | grep ':80'          ← verifica che la porta 80 sia libera
+      (se occupata: modifica docker-compose.yml con una porta diversa)
+  4.  git clone https://github.com/TUO-UTENTE/sillabe.git
+  5.  cd sillabe/sillabe
+  6.  docker compose up --build -d
+  7.  Apri http://IP-DEL-PI nel browser — l'app è online!
+
+
+================================================================================
+  RIEPILOGO RAPIDO — Aggiornamento
+================================================================================
+
+  Sul Mac:
+      git add . && git commit -m "fix" && git push
+
+  Sul Pi via SSH:
+      ssh pi@192.168.1.42
+      cd ~/sillabe/sillabe
+      ./update.sh
+
+
+================================================================================

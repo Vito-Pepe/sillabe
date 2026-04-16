@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sillabe</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- SCHERMATA SELEZIONE -->
+  <div id="setup-screen" class="screen active">
+    <h1 class="title">Sillabe</h1>
+    <p class="subtitle">Scegli due consonanti per iniziare</p>
+
+    <div class="selected-display">
+      <div id="cons1" class="selected-cons empty">?</div>
+      <div class="selected-sep">+</div>
+      <div id="cons2" class="selected-cons empty">?</div>
+    </div>
+
+    <div id="consonant-grid" class="consonant-grid"></div>
+
+    <button id="play-btn" class="play-btn" disabled>Gioca!</button>
+  </div>
+
+  <!-- SCHERMATA DI GIOCO -->
+  <div id="game-screen" class="screen">
+    <div class="game-topbar">
+      <button id="back-btn" class="back-btn">&#8592; Cambia</button>
+      <span id="game-subtitle" class="game-subtitle"></span>
+    </div>
+
+    <h2 class="game-title">Indovina la sillaba!</h2>
+    <p class="game-hint">Clicca il punto interrogativo per ascoltarla, poi scegli quella giusta</p>
+
+    <div class="mystery-area">
+      <button id="mystery-box" class="mystery-box" title="Ascolta la sillaba misteriosa">
+        <span id="mystery-icon" class="mystery-icon">?</span>
+        <span class="mystery-label">Ascolta</span>
+      </button>
+    </div>
+
+    <div id="syllable-grid" class="syllable-grid"></div>
+
+    <div id="message" class="message hidden"></div>
+    <button id="new-game-btn" class="new-game-btn hidden">Ancora!</button>
+  </div>
+
+  <div id="confetti-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

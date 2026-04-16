@@ -1,0 +1,17 @@
+services:
+  sillabe:
+    build: .
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+  # Watchtower aggiorna automaticamente il container quando pubblichi una nuova immagine.
+  # Scommenta le righe qui sotto per abilitarlo (richiede che l'immagine venga pubblicata
+  # su un registry come Docker Hub o GHCR).
+  #
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: --interval 300   # controlla ogni 5 minuti
+  #   restart: unless-stopped
