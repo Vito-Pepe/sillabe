@@ -2,7 +2,10 @@ services:
   sillabe:
     build: .
     ports:
-      - "80:80"
+      # Esposto solo su loopback: niente accesso da LAN o Internet.
+      # La pubblicazione avviene tramite Tailscale (vedi TAILSCALE.md),
+      # non tramite Docker.
+      - "127.0.0.1:8080:80"
     restart: unless-stopped
 
   # Watchtower aggiorna automaticamente il container quando pubblichi una nuova immagine.
