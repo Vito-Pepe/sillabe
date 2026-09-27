@@ -1,6 +1,11 @@
 # Deploy sicuro su Raspberry Pi 5 via Tailscale
 
-Questa guida copre il bootstrap completo di un Raspberry Pi 5 **appena flashato** e la pubblicazione dell'app Sillabe **esclusivamente** sulla tua rete Tailscale (tailnet): nessuna porta aperta sul router, nessuna esposizione sulla LAN o su Internet pubblico. L'app è raggiungibile solo dai dispositivi che hai autenticato sul tuo account Tailscale, da qualunque rete essi si trovino nel mondo (Tailscale è una mesh VPN WireGuard, non limitata alla rete di casa).
+Questa guida copre il bootstrap completo di un Raspberry Pi 5 **appena flashato** e la pubblicazione dell'app Sillabe in modo che sia raggiungibile in due modi contemporaneamente:
+
+- **dalla LAN di casa**, come un qualunque servizio sulla rete locale (`http://IP-DEL-PI:8080`);
+- **da remoto tramite Tailscale**, da qualunque rete nel mondo, autenticato con il tuo account (Tailscale è una mesh VPN WireGuard, non limitata alla rete di casa).
+
+Nessuna porta viene aperta sul router: l'accesso da remoto passa solo dalla tailnet, mentre quello da LAN resta comunque limitato ai dispositivi già dentro la tua rete locale.
 
 Tutti i comandi vanno eseguiti **via SSH direttamente sul Raspberry Pi**, aperto tu dal tuo Mac/PC. Questo file non sostituisce `DEPLOY.txt` per le basi di Docker: lo estende con la parte di rete/sicurezza.
 
@@ -81,7 +86,7 @@ git clone https://github.com/Vito-Pepe/sillabe.git
 cd sillabe
 ```
 
-Avvia il container (già configurato in `docker-compose.yml` per ascoltare solo su `127.0.0.1:8080`):
+Avvia il container (già configurato in `docker-compose.yml` per ascoltare sulla porta `8080` di tutte le interfacce):
 
 ```bash
 docker compose up --build -d
@@ -94,7 +99,7 @@ Verifica che risponda in locale:
 curl -I http://127.0.0.1:8080
 ```
 
-Dovresti vedere `HTTP/1.1 200 OK`. A questo punto l'app **non è ancora raggiungibile** da nessun altro dispositivo, nemmeno sulla LAN: è legata al loopback del Pi apposta.
+Dovresti vedere `HTTP/1.1 200 OK`. A questo punto l'app è già raggiungibile anche da un altro dispositivo sulla LAN, su `http://IP-DEL-PI:8080` — la pubblicazione su Tailscale al passo D aggiunge l'accesso da remoto, non sostituisce quello locale.
 
 ## D. Pubblicazione sulla tailnet
 
@@ -119,7 +124,7 @@ https://<nome-macchina>.<nome-tailnet>.ts.net
 
 Il nome esatto lo trovi nell'output di `tailscale status` o nel pannello admin.
 
-**Conferma di sicurezza**: l'app non è raggiungibile né dalla LAN né da Internet pubblico — nessuna porta è aperta sul router, il container Docker ascolta solo su `127.0.0.1`, e l'unico modo per raggiungerlo è essere autenticati sulla tua tailnet.
+**Riepilogo accesso**: da questo punto l'app è raggiungibile in due modi paralleli — `http://IP-DEL-PI:8080` per chi è già sulla tua LAN, e `https://<nome-macchina>.<nome-tailnet>.ts.net` per chi è autenticato sulla tua tailnet da qualunque altra rete. Nessuna porta è comunque aperta sul router: l'accesso da fuori casa passa solo da Tailscale.
 
 ## E. Aggiornamento automatico
 
@@ -158,8 +163,8 @@ Alternativa più "system" (opzionale, non necessaria): un systemd timer al posto
 Per ogni nuova app della tua GitHub org che vuoi containerizzare sullo stesso Raspberry Pi:
 
 1. Clona la repo in una cartella propria (es. `~/nome-app`).
-2. Nel suo `docker-compose.yml`, lega la porta a `127.0.0.1:<porta-locale>:<porta-interna>`, scegliendo una porta locale libera diversa da `8080` (es. `8081`, `8082`, ...).
-3. Pubblica con un comando `tailscale serve` dedicato (Tailscale supporta più mapping — porte HTTPS diverse o path diversi sullo stesso hostname).
+2. Nel suo `docker-compose.yml`, lega la porta a `<porta-locale>:<porta-interna>`, scegliendo una porta locale libera diversa da `8080` (es. `8081`, `8082`, ...) — così è già raggiungibile anche dalla LAN, come sillabe.
+3. Pubblica con un comando `tailscale serve` dedicato per l'accesso da remoto (Tailscale supporta più mapping — porte HTTPS diverse o path diversi sullo stesso hostname).
 
 Non serve installare Tailscale più volte né usare un container sidecar per app: una singola installazione di Tailscale sul Pi (fatta al passo B) basta per tutte le app che ci farai girare.
 
