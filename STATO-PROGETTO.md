@@ -20,7 +20,7 @@ Entrambe le repo hanno il lavoro sul branch `claude/docker-sillabe-raspberry-njm
 ## Il Raspberry Pi
 
 - Raspberry Pi OS Lite 64-bit, installazione pulita, collegato in Wi-Fi.
-- Hostname `vito`, utente `pepe`, IP in LAN `192.168.1.22` (conviene assegnarlo fisso dal router).
+- Hostname `vito`, utente `pepe`, IP in LAN `192.168.1.22` (fisso, assegnato dal router).
 - Accesso: `ssh pepe@192.168.1.22`. Il nome `vito.local` non sempre risolve.
 - Installati: Docker + plugin compose (script get.docker.com), Tailscale (script ufficiale), git, cron.
 - Tailscale gira sull'host, non in un container. Il Pi compare nella tailnet come `vito` (`100.96.58.127`).
@@ -80,7 +80,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] Disattivare la scadenza della chiave per `vito` (pannello Tailscale > Machines > Disable key expiry), altrimenti il Pi esce dalla tailnet dopo circa 180 giorni.
 - [ ] Verificare nel pannello Tailscale (DNS) che MagicDNS e HTTPS Certificates siano attivi.
 - [ ] Decidere se fare il merge dei branch su `main` (poi far passare il Pi a `main` e non cancellare il branch finché il Pi lo segue).
-- [ ] Assegnare un IP fisso al Pi dal router.
+- [x] Assegnare un IP fisso al Pi dal router (fatto).
 - [ ] Rimuovere dal pannello Tailscale i dispositivi vecchi offline (anche un `pihole` di quasi un anno fa).
 - [ ] Scegliere la prossima app da aggiungere.
 
