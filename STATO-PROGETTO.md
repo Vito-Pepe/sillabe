@@ -89,7 +89,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [x] Assegnare un IP fisso al Pi dal router (fatto).
 - [ ] Rimuovere dal pannello Tailscale i dispositivi vecchi offline (anche un `pihole` di quasi un anno fa).
 - [ ] Deploy di Parole sul Pi e attivazione di `tailscale funnel` (vedi README di parole).
-- [ ] Isolare il container di Parole dalla LAN (firewall sul Pi o rete separata) prima di distribuire molti link.
+- [ ] Installare sul Pi l'isolamento di rete di Parole (script e servizio pronti in `firewall/` della repo parole, istruzioni nel suo README).
 - [ ] Revisione di sicurezza dedicata del server di Parole prima di un uso esteso.
 - [ ] Scegliere la prossima app da aggiungere.
 
