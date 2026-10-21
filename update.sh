@@ -7,7 +7,7 @@
 
 set -e
 
-BRANCH="main"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 echo "==> Controllo aggiornamenti su origin/$BRANCH..."
 git fetch origin "$BRANCH"
@@ -21,7 +21,7 @@ if [ "$LOCAL" = "$REMOTE" ]; then
 fi
 
 echo "==> Nuovi commit trovati, aggiorno..."
-git pull origin "$BRANCH"
+git pull --ff-only origin "$BRANCH"
 
 echo "==> Rebuild e riavvio del container..."
 docker compose up --build -d

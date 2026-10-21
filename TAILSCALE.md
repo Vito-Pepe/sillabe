@@ -128,7 +128,7 @@ Il nome esatto lo trovi nell'output di `tailscale status` o nel pannello admin.
 
 ## E. Aggiornamento automatico
 
-Lo script `update.sh` nella repo controlla se ci sono commit nuovi su `origin/main` prima di fare qualunque cosa: se non c'è nulla di nuovo esce subito senza toccare il container, altrimenti fa pull, rebuild e riavvio. Questo lo rende sicuro da eseguire periodicamente via cron, oltre che a mano con `./update.sh` o `make update`.
+Lo script `update.sh` nella repo controlla se ci sono commit nuovi sul branch attualmente in uso sul Pi (quello con cui hai clonato) prima di fare qualunque cosa: se non c'è nulla di nuovo esce subito senza toccare il container, altrimenti fa pull, rebuild e riavvio. Questo lo rende sicuro da eseguire periodicamente via cron, oltre che a mano con `./update.sh` o `make update`.
 
 Per farlo girare automaticamente ogni volta che pushi sul branch, apri il crontab del tuo utente sul Pi:
 
