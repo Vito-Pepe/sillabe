@@ -17,7 +17,7 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
-**Parole è l'unica cosa esposta su Internet**, e solo in parte: la logopedista (la mia ragazza) crea esercizi dall'app privata e manda ai pazienti un link. La porta pubblica (8083) mostra solo l'esercizio del link: niente login, niente scritture, niente elenchi. L'app non conserva dati personali dei pazienti: nel nome dell'esercizio non va il nome del paziente e le foto devono essere generiche. Rischio residuo: un difetto in Node o nel server darebbe accesso al container, che può raggiungere la LAN. Mitigazioni possibili, non ancora fatte: Pi su rete ospiti/VLAN, oppure regole firewall che impediscono al container di parlare con la LAN.
+**Parole è l'unica cosa esposta su Internet**, e solo in parte: la logopedista (la mia ragazza) crea esercizi dall'app privata e manda ai pazienti un link. La porta pubblica (8083) mostra solo l'esercizio del link: niente login, niente scritture, niente elenchi. L'app non conserva dati personali dei pazienti: nel nome dell'esercizio non va il nome del paziente e le foto devono essere generiche. Il container è isolato dal firewall del Pi: non può aprire connessioni verso LAN, tailnet, Internet o il Pi stesso (resta solo il DNS interno di Docker). Ulteriore passo possibile: Pi su rete ospiti/VLAN.
 
 Il nome della tailnet si legge con `tailscale serve status` sul Pi o nel pannello admin Tailscale.
 
@@ -88,8 +88,8 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] Decidere se fare il merge dei branch su `main` (poi far passare il Pi a `main` e non cancellare il branch finché il Pi lo segue).
 - [x] Assegnare un IP fisso al Pi dal router (fatto).
 - [ ] Rimuovere dal pannello Tailscale i dispositivi vecchi offline (anche un `pihole` di quasi un anno fa).
-- [ ] Deploy di Parole sul Pi e attivazione di `tailscale funnel` (vedi README di parole).
-- [ ] Installare sul Pi l'isolamento di rete di Parole (script e servizio pronti in `firewall/` della repo parole, istruzioni nel suo README).
+- [x] Deploy di Parole sul Pi e attivazione di `tailscale funnel` (fatto, link provato da fuori casa).
+- [x] Isolamento di rete di Parole installato (servizio `parole-firewall`, verificato: connessioni verso la LAN bloccate, regole presenti dopo il riavvio). I blocchi verso `224.0.0.251` nel log sono gli annunci mDNS del Pi stesso: innocui.
 - [ ] Revisione di sicurezza dedicata del server di Parole prima di un uso esteso.
 - [ ] Scegliere la prossima app da aggiungere.
 
