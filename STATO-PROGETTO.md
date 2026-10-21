@@ -12,6 +12,9 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 |---|---|---|---|---|
 | Homepage | `Vito-Pepe/homepage` | `http://192.168.1.22:8081` | `https://vito.<tailnet>.ts.net` (443) | 8081 |
 | Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://vito.<tailnet>.ts.net:8443` | 8080 |
+| Parole | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `https://vito.<tailnet>.ts.net:10000` | 8082 |
+
+Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
 Il nome della tailnet si legge con `tailscale serve status` sul Pi o nel pannello admin Tailscale.
 
@@ -64,7 +67,7 @@ cd ~/sillabe && docker compose logs --tail 30 sillabe
 4. Pubblicazione: `sudo tailscale serve --bg --https=<porta> localhost:<porta-locale>`.
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsPort`.
 
-Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma tipicamente 443, 8443 e 10000). Con la terza app le porte finiscono: valutare un reverse proxy locale (es. Caddy o nginx) con un percorso o un sottodominio per app.
+Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma tipicamente 443, 8443 e 10000). Con Parole sono tutte usate: per la quarta app serve un reverse proxy locale (es. Caddy o nginx) con un percorso o un sottodominio per app.
 
 ## Cose imparate
 
