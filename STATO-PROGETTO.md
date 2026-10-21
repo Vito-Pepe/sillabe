@@ -12,13 +12,16 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 |---|---|---|---|---|
 | Homepage | `Vito-Pepe/homepage` | `http://192.168.1.22:8081` | `https://vito.<tailnet>.ts.net` (443) | 8081 |
 | Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://vito.<tailnet>.ts.net:8443` | 8080 |
-| Parole | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `https://vito.<tailnet>.ts.net:10000` | 8082 |
+| Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `http://vito.<tailnet>.ts.net:8082` (http, cifrato da Tailscale) | 8082 |
+| Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.22:8083` | **Internet**: `https://vito.<tailnet>.ts.net:10000/e/<codice>` con `tailscale funnel` | 8083 |
 
-Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
+Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
+
+**Parole è l'unica cosa esposta su Internet**, e solo in parte: la logopedista (la mia ragazza) crea esercizi dall'app privata e manda ai pazienti un link. La porta pubblica (8083) mostra solo l'esercizio del link: niente login, niente scritture, niente elenchi. L'app non conserva dati personali dei pazienti: nel nome dell'esercizio non va il nome del paziente e le foto devono essere generiche. Rischio residuo: un difetto in Node o nel server darebbe accesso al container, che può raggiungere la LAN. Mitigazioni possibili, non ancora fatte: Pi su rete ospiti/VLAN, oppure regole firewall che impediscono al container di parlare con la LAN.
 
 Il nome della tailnet si legge con `tailscale serve status` sul Pi o nel pannello admin Tailscale.
 
-Entrambe le repo hanno il lavoro sul branch `claude/docker-sillabe-raspberry-njmc8b`. **Non è stato fatto il merge su `main`**: il Pi clona e segue questo branch.
+Tutte le repo hanno il lavoro sul branch `claude/docker-sillabe-raspberry-njmc8b`. **Non è stato fatto il merge su `main`**: il Pi clona e segue questo branch.
 
 ## Il Raspberry Pi
 
@@ -85,6 +88,9 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] Decidere se fare il merge dei branch su `main` (poi far passare il Pi a `main` e non cancellare il branch finché il Pi lo segue).
 - [x] Assegnare un IP fisso al Pi dal router (fatto).
 - [ ] Rimuovere dal pannello Tailscale i dispositivi vecchi offline (anche un `pihole` di quasi un anno fa).
+- [ ] Deploy di Parole sul Pi e attivazione di `tailscale funnel` (vedi README di parole).
+- [ ] Isolare il container di Parole dalla LAN (firewall sul Pi o rete separata) prima di distribuire molti link.
+- [ ] Revisione di sicurezza dedicata del server di Parole prima di un uso esteso.
 - [ ] Scegliere la prossima app da aggiungere.
 
 ## Per riprendere con Claude
