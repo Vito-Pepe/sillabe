@@ -78,6 +78,8 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - L'integrazione GitHub di Claude non può creare repo nuove (403): la repo vuota va creata a mano, poi si collega con accesso in scrittura.
 - Il cron non deve usare `sudo`: i file di `.git` diventerebbero di root e i pull successivi fallirebbero.
 - Sillabe mette in cache CSS e JS per 1 giorno. Visto che homepage e Sillabe hanno condiviso lo stesso indirizzo, la homepage prendeva lo stile di Sillabe: per questo il suo CSS si chiama `home.css`. Dare nomi di file diversi alle app che possono condividere un indirizzo.
+- **HSTS vale per tutto il nome host, porte comprese.** Un header `Strict-Transport-Security` su una porta (es. gli esercizi pubblici su :10000) fa aprire in https anche le altre app sullo stesso host che usano http (Parole su :8082), e Safari smette di caricarle. Non attivare HSTS su questo host. Se capita, il server manda `max-age=0` e il browser dimentica la regola alla prossima visita.
+- Il kernel del Pi non applica i limiti di memoria dei container ("No memory limit support"): `mem_limit` nel compose di Parole non ha effetto finché non si aggiunge `cgroup_enable=memory cgroup_memory=1` a `/boot/firmware/cmdline.txt` (una sola riga) e si riavvia. Opzionale.
 - Dopo `usermod -aG docker` serve uscire e rientrare via SSH, altrimenti `docker` richiede `sudo`.
 - `tailscale up` stampa un link di login monouso da aprire nel browser.
 
@@ -90,6 +92,8 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] Rimuovere dal pannello Tailscale i dispositivi vecchi offline (anche un `pihole` di quasi un anno fa).
 - [x] Deploy di Parole sul Pi e attivazione di `tailscale funnel` (fatto, link provato da fuori casa).
 - [x] Isolamento di rete di Parole installato (servizio `parole-firewall`, verificato: connessioni verso la LAN bloccate, regole presenti dopo il riavvio). I blocchi verso `224.0.0.251` nel log sono gli annunci mDNS del Pi stesso: innocui.
+- [ ] **Parole ha il login disattivato** (`DISABLE_LOGIN=1` nel file `~/parole/.env` sul Pi, aggiunto temporaneamente). Per rimetterlo: `docker run --rm -v parole_parole-data:/data alpine rm /data/settings.json`, `sed -i '/^DISABLE_LOGIN/d' ~/parole/.env`, `docker compose up -d` (il codice torna `7777`).
+- [ ] (Opzionale) Attivare il limite di memoria dei container, vedi sopra.
 - [ ] Revisione di sicurezza dedicata del server di Parole prima di un uso esteso.
 - [ ] Scegliere la prossima app da aggiungere.
 
