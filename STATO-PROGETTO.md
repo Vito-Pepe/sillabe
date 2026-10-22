@@ -95,6 +95,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] **Parole ha il login disattivato** (`DISABLE_LOGIN=1` nel file `~/parole/.env` sul Pi, aggiunto temporaneamente). Per rimetterlo: `docker run --rm -v parole_parole-data:/data alpine rm /data/settings.json`, `sed -i '/^DISABLE_LOGIN/d' ~/parole/.env`, `docker compose up -d` (il codice torna `7777`).
 - [ ] (Opzionale) Attivare il limite di memoria dei container, vedi sopra.
 - [ ] Revisione di sicurezza dedicata del server di Parole prima di un uso esteso.
+- [ ] Valutare i **gruppi di esercizi** di Parole (branch `claude/parole-gruppi-esercizi` della repo parole, non ancora sul Pi): più esercizi sotto un unico link, con pagina di scelta. Se piace, il Pi passa a quel branch; se no, si resta sul branch attuale. Si può tornare indietro senza perdere dati (i gruppi stanno in `groups.json`, ignorato dalla versione precedente).
 - [ ] Scegliere la prossima app da aggiungere.
 
 ## Per riprendere con Claude
