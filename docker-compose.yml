@@ -2,7 +2,11 @@ services:
   sillabe:
     build: .
     ports:
-      - "80:80"
+      # 8080 esposto su tutte le interfacce: raggiungibile sia dalla LAN
+      # (http://IP-DEL-PI:8080) sia da remoto tramite Tailscale, che
+      # pubblica in piu' lo stesso servizio in HTTPS sulla tailnet
+      # (tailscale serve, vedi TAILSCALE.md).
+      - "8080:80"
     restart: unless-stopped
 
   # Watchtower aggiorna automaticamente il container quando pubblichi una nuova immagine.

@@ -17,6 +17,21 @@ INDICE
 
 
 ================================================================================
+  NOTA IMPORTANTE — Accesso via LAN + Tailscale
+================================================================================
+
+Questa repo espone l'app sia sulla LAN sia da remoto:
+docker-compose.yml lega il container alla porta 8080 su tutte le
+interfacce (non più "80:80"), quindi è già raggiungibile in rete locale
+su http://IP-DEL-PI:8080. Questa guida (DEPLOY.txt) copre le basi di
+Docker (installazione, primo avvio, comandi utili). Per aggiungere anche
+l'accesso da fuori casa, in modo sicuro e senza aprire porte sul router,
+segui TAILSCALE.md: installa Tailscale sul Pi e pubblica l'app sulla tua
+tailnet con HTTPS automatico, raggiungibile da qualunque rete nel mondo,
+in parallelo all'accesso LAN che resta comunque attivo.
+
+
+================================================================================
   1. COSA TI SERVE PRIMA DI INIZIARE
 ================================================================================
 
@@ -118,6 +133,10 @@ prima di avviare l'app Sillabe.
   stanno usando. Prendi nota delle porte nella colonna "PORTS".
 
 --- Passo 4.3 — Controlla se la porta 80 è libera ---
+
+  NOTA: di default questa repo usa ora la porta 8080 (non più 80),
+  vedi la nota a inizio file. Controlla quindi la porta 8080 al posto
+  di 80 nei comandi qui sotto, a meno che tu non l'abbia cambiata.
 
   L'app Sillabe usa di default la porta 80. Verifica che non
   sia già occupata da un altro container o servizio:
@@ -227,16 +246,20 @@ Quando il comando finisce senza errori, l'app è attiva.
   Dovresti vedere una riga con "sillabe" e stato "Up".
 
   Prova ad aprire l'app localmente:
-      curl -I http://localhost
+      curl -I http://127.0.0.1:8080
   Dovresti vedere: HTTP/1.1 200 OK
 
 --- Da un altro dispositivo sulla stessa rete ---
 
   Apri il browser sul tuo Mac / telefono e vai su:
-      http://192.168.1.42
-  (usa l'IP del tuo Raspberry Pi)
+      http://192.168.1.42:8080
+  (usa l'IP del tuo Raspberry Pi; nota la porta 8080, non più 80)
 
   Dovresti vedere l'app Sillabe pronta all'uso!
+
+  Per accedere anche da fuori casa (non connesso alla stessa LAN),
+  segui TAILSCALE.md: aggiunge l'accesso via Tailscale in parallelo,
+  senza toccare quello sulla LAN appena verificato.
 
 --- Guardare i log in tempo reale ---
 
@@ -299,10 +322,14 @@ modifiche sul Raspberry Pi, segui questi passi.
 ══════════════════════════════════════════════════════════════════
 
   Se vuoi che il Pi aggiorni l'app da solo senza intervento
-  manuale, puoi abilitare Watchtower. Apri docker-compose.yml
-  e togli i commenti dalla sezione "watchtower".
-  Questo richiede che l'immagine sia pubblicata su Docker Hub.
-  Per la maggior parte dei casi lo script manuale è sufficiente.
+  manuale, il modo più semplice con questa repo è mettere
+  update.sh su un cron job: controlla da solo se ci sono commit
+  nuovi e, solo in quel caso, fa pull + rebuild + riavvio.
+  Vedi la sezione "E. Aggiornamento automatico" in TAILSCALE.md.
+
+  In alternativa esiste anche Watchtower (sezione commentata in
+  docker-compose.yml), ma richiede di pubblicare l'immagine su un
+  registry come Docker Hub — per questa repo non è necessario.
 
 
 ================================================================================
@@ -360,18 +387,18 @@ PROBLEMA: "Permission denied" quando eseguo docker
       sudo usermod -aG docker $USER
   Poi disconnettiti e riconnettiti via SSH.
 
-PROBLEMA: La porta 80 è già in uso
-  SOLUZIONE: Qualcos'altro sta usando la porta 80 sul Pi.
-  Modifica docker-compose.yml e cambia "80:80" in "8080:80",
-  poi accedi all'app su http://192.168.1.42:8080
+PROBLEMA: La porta 8080 (o 80) è già in uso
+  SOLUZIONE: Qualcos'altro sta usando quella porta sul Pi.
+  Modifica docker-compose.yml e cambia "8080:80" in un'altra porta
+  libera (es. "8081:80"), poi accedi all'app su http://192.168.1.42:8081
 
 PROBLEMA: L'app non si apre dal browser
   SOLUZIONE 1: Verifica che il container sia attivo con: docker ps
   SOLUZIONE 2: Controlla i log con: docker compose logs
   SOLUZIONE 3: Verifica che stai usando l'IP giusto del Pi
-  SOLUZIONE 4: Controlla che il firewall non blocchi la porta 80:
+  SOLUZIONE 4: Controlla che il firewall non blocchi la porta 8080:
       sudo ufw status
-      sudo ufw allow 80/tcp   (se il firewall è attivo)
+      sudo ufw allow 8080/tcp   (se il firewall è attivo)
 
 PROBLEMA: "git pull" dice "Already up to date" ma le modifiche
           non appaiono nell'app
@@ -408,7 +435,8 @@ PROBLEMA: Non riesco a connettermi via SSH
   4.  git clone https://github.com/TUO-UTENTE/sillabe.git
   5.  cd sillabe/sillabe
   6.  docker compose up --build -d
-  7.  Apri http://IP-DEL-PI nel browser — l'app è online!
+  7.  Apri http://IP-DEL-PI:8080 nel browser — l'app è online sulla LAN!
+  8.  (opzionale) Segui TAILSCALE.md per accedere anche da fuori casa
 
 
 ================================================================================
