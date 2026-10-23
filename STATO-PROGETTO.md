@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-10-21. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-10-23. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
@@ -14,6 +14,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://vito.<tailnet>.ts.net:8443` | 8080 |
 | Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `http://vito.<tailnet>.ts.net:8082` (http, cifrato da Tailscale) | 8082 |
 | Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.22:8083` | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/e/<codice>` (funnel da un dispositivo Tailscale separato, servizio `tailscale-public`; prima era `vito...:10000`) | 8083 |
+| Giochi della homepage (link pubblici) | `Vito-Pepe/homepage` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/g/<codice>` | 127.0.0.1:8084 |
+| Chess | `Vito-Pepe/Chess` | `http://192.168.1.22:8085` | `http://vito:8085` (http) | 8085 |
+| Minigiochi | `Vito-Pepe/minigiochi` | `http://192.168.1.22:8087` | `http://vito:8087` (http) | 8087 |
+| Minigiochi (link pubblici) | `Vito-Pepe/minigiochi` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/m/<codice>` | 127.0.0.1:8086 |
+
+Porte occupate sul Pi: 8080–8087 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -21,15 +27,23 @@ Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle 
 
 Il nome della tailnet si legge con `tailscale serve status` sul Pi o nel pannello admin Tailscale.
 
-**Il Pi segue `main`** in tutte e tre le repo. Flusso di lavoro: le modifiche si fanno su un branch, si apre una pull request verso `main` e la si unisce su GitHub con **"Create a merge commit"** (non squash né rebase). Entro 5 minuti il cron aggiorna il Pi. Per annullare una modifica: pulsante "Revert" sulla PR unita. Il branch `claude/docker-sillabe-raspberry-njmc8b` è quello di lavoro della prima sessione; in parole, `claude/parole-gruppi-esercizi` è già tutto dentro `main` e si può cancellare.
+**Il Pi segue `main`** in tutte le repo. Flusso di lavoro: le modifiche si fanno su un branch, si apre una pull request verso `main` e la si unisce su GitHub con **"Create a merge commit"** (non squash né rebase). Entro 5 minuti il cron aggiorna il Pi. Per annullare una modifica: pulsante "Revert" sulla PR unita. Il branch `claude/docker-sillabe-raspberry-njmc8b` è quello di lavoro della prima sessione; in parole, `claude/parole-gruppi-esercizi` è già tutto dentro `main` e si può cancellare.
 
 ### Giochi (sezione della homepage)
 
-Riquadro **Giochi** nella homepage, pagina `/giochi/`. Elenca da sola i file `.html` in `app/giochi/files/` della repo homepage (nginx genera l'elenco in JSON). Per aggiungere un gioco della mia ragazza: caricare il file in quella cartella, anche dal browser su GitHub (Add file > Upload files su `main`), ed entro 5 minuti compare. Nome dal `<title>`, icona da `<meta name="icona" content="🐶">`, descrizione da `<meta name="description">`. `memory-esempio.html` è solo un esempio.
+Riquadro **Giochi** nella homepage, pagina `/giochi/`. Elenca da sola i file `.html` in `app/giochi/files/` della repo homepage (nginx genera l'elenco in JSON), con una **barra di ricerca** per nome in cima (ignora maiuscole e accenti). Per aggiungere un gioco della mia ragazza: caricare il file in quella cartella, anche dal browser su GitHub (Add file > Upload files su `main`), ed entro 5 minuti compare. Nome dal `<title>`, icona da `<meta name="icona" content="🐶">`, descrizione da `<meta name="description">`. `memory-esempio.html` è solo un esempio; `puzzle-emoji.html` è un puzzle con le emoji (4 o 9 pezzi, si trascinano con il dito o si toccano due pezzi per scambiarli).
 
 Si possono anche **caricare dalla pagina**: link "Gestisci giochi" in fondo, password `GIOCHI_PASSWORD` nel `.env` della homepage sul Pi. Il gioco compare subito. I giochi caricati stanno solo sul Pi (volume `homepage_giochi-caricati`, da includere nei backup) e si eliminano con la ✕ sul riquadro. Li gestisce il servizio `giochi` (cartella `uploader/` della repo homepage), raggiunto da nginx su `/giochi/api/`.
 
 **Gruppi di giochi (link per i genitori)**: in "Gestisci giochi" si creano gruppi di uno o più giochi, ognuno con un link pubblico `https://parole-esercizi.<tailnet>.ts.net/g/<codice>` (Copia, Modifica, Nuovo link, Elimina). Con più giochi il link apre una pagina di scelta, con uno solo va dritto al gioco. I giochi sono serviti in sandbox, con uno script aggiunto al volo che fa tornare "← Giochi" alla pagina di scelta (o lo nasconde). Lo serve la porta pubblica del servizio `giochi` (`127.0.0.1:8084`) tramite l'ingresso di Parole (percorso `/g/` in `tailscale/serve.json` della repo parole). Indirizzo base in `GIOCHI_PUBLIC_URL` nel `.env` della homepage; gruppi nel volume `homepage_giochi-stato`. Container della homepage isolati dalla LAN con `firewall/giochi-firewall.sh` (bridge `br-giochi`). Non ci sono più link per singolo gioco.
+
+### Minigiochi (app separata)
+
+Repo `minigiochi`, pagina `http://vito:8087`. È una **copia** della sezione Giochi della homepage in un'app a sé, con lo stesso codice e gli stessi vincoli: ricerca, caricamento con password, gruppi con link pubblico, sandbox, container in sola lettura, firewall (`firewall/minigiochi-firewall.sh`, bridge `br-minigiochi`, servizio systemd `minigiochi-firewall`). Giochi della repo in `app/files/`.
+
+Dati **separati** dalla homepage: volumi `minigiochi_giochi-caricati` e `minigiochi_giochi-stato`, `.env` proprio con `GIOCHI_PASSWORD` e `GIOCHI_PUBLIC_URL=https://parole-esercizi.<tailnet>.ts.net/m`. Link pubblici sul percorso `/m/` dell'ingresso di Parole, verso `127.0.0.1:8086`.
+
+Differenze dal codice della homepage: gestione su `/api/` (non `/giochi/api/`), cookie di accesso `minigiochi` (non `giochi`), link pubblici `/m/` (non `/g/`). **Una correzione al codice dei giochi va fatta in tutte e due le repo.**
 
 ## Il Raspberry Pi
 
@@ -61,10 +75,19 @@ crontab -l
 # Log degli aggiornamenti automatici
 tail -f ~/sillabe/update.log
 tail -f ~/homepage/update.log
+tail -f ~/minigiochi/update.log
 
-# Aggiornare subito a mano
+# Aggiornare subito a mano (stesso comando in ogni repo: parole, Chess, minigiochi...)
 cd ~/sillabe && ./update.sh
 cd ~/homepage && ./update.sh
+
+# Dopo una modifica a tailscale/serve.json di parole (letto solo all'avvio)
+cd ~/parole && docker compose up -d --force-recreate tailscale-public
+
+# Firewall dei container esposti
+sudo parole-firewall.sh status
+sudo giochi-firewall.sh status
+sudo minigiochi-firewall.sh status
 
 # Log di un container
 cd ~/sillabe && docker compose logs --tail 30 sillabe
@@ -73,7 +96,7 @@ cd ~/sillabe && docker compose logs --tail 30 sillabe
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera diversa da 8080 e 8081 (es. 8082).
+2. Porta locale libera: oggi 8080–8087 sono occupate, quindi dalla 8088 in su (verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Pubblicazione: `sudo tailscale serve --bg --https=<porta> localhost:<porta-locale>`.
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsPort`.
@@ -91,6 +114,9 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - Il kernel del Pi non applica i limiti di memoria dei container ("No memory limit support"): `mem_limit` nel compose di Parole non ha effetto finché non si aggiunge `cgroup_enable=memory cgroup_memory=1` a `/boot/firmware/cmdline.txt` (una sola riga) e si riavvia. Opzionale.
 - Dopo `usermod -aG docker` serve uscire e rientrare via SSH, altrimenti `docker` richiede `sudo`.
 - `tailscale up` stampa un link di login monouso da aprire nel browser.
+- **I cookie non distinguono le porte**: due app sullo stesso host (`vito:8081` e `vito:8087`) vedono gli stessi cookie. Se due app usano un cookie con lo stesso nome, entrare in una fa uscire dall'altra: per questo Minigiochi usa il cookie `minigiochi` e la homepage `giochi`.
+- Un `curl` lanciato subito dopo `docker compose up` può dare "Connection reset by peer": nginx non è ancora pronto. Basta riprovare dopo qualche secondo.
+- L'avviso nginx `duplicate MIME type "text/html"` è innocuo (l'HTML è già compresso di default).
 
 ## Da fare
 
@@ -109,7 +135,8 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] Verificare che con il Relay privato acceso la homepage via Tailscale (`https://vito.<tailnet>.ts.net`) funzioni.
 - [x] Tolto il doppione della riga di aggiornamento di parole nel crontab.
 - [x] **Gruppi di esercizi** di Parole adottati: più esercizi sotto un unico link, con pagina di scelta e titolo per il bambino. Sono in `main`. Per tornare indietro: revert del commit `febaf42` nella repo parole (i gruppi stanno in `groups.json`, ignorato dalla versione senza gruppi).
-- [ ] Scegliere la prossima app da aggiungere.
+- [x] Aggiunte Chess (porta 8085) e Minigiochi (porta 8087, firewall verificato, link `/m/` provato da rete mobile).
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8088).
 
 ## Per riprendere con Claude
 
