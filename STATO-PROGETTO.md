@@ -11,7 +11,7 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | App | Repo | LAN (http) | Tailscale (https) | Porta locale sul Pi |
 |---|---|---|---|---|
 | Homepage | `Vito-Pepe/homepage` | `http://192.168.1.22:8081` | `https://vito.<tailnet>.ts.net` (443) | 8081 |
-| Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://vito.<tailnet>.ts.net:8443` | 8080 |
+| Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://vito.<tailnet>.ts.net:10000` (era 8443) | 8080 |
 | Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `http://vito.<tailnet>.ts.net:8082` (http, cifrato da Tailscale) | 8082 |
 | Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.22:8083` | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/e/<codice>` (funnel da un dispositivo Tailscale separato, servizio `tailscale-public`; prima era `vito...:10000`) | 8083 |
 | Giochi della homepage (link pubblici) | `Vito-Pepe/homepage` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/g/<codice>` | 127.0.0.1:8084 |
@@ -57,7 +57,7 @@ Differenze dal codice della homepage: gestione su `/api/` (non `/giochi/api/`), 
 ## Come funziona
 
 1. Ogni app è un sito statico servito da nginx in un container (`docker compose`), con la porta pubblicata su tutte le interfacce, quindi raggiungibile dalla LAN.
-2. `tailscale serve` pubblica le porte locali sulla tailnet in HTTPS: `443 -> localhost:8081` (homepage) e `8443 -> localhost:8080` (Sillabe). Funziona solo per i dispositivi autenticati sulla tailnet, da qualunque rete.
+2. `tailscale serve` pubblica le porte locali sulla tailnet in HTTPS: `443 -> localhost:8081` (homepage), `10000 -> localhost:8080` (Sillabe) e `8443 -> localhost:8765` (un'altra app, aggiunta fuori da queste sessioni: probabilmente "meteo", in `~/parole/meteo`). Funziona solo per i dispositivi autenticati sulla tailnet, da qualunque rete.
 3. Ogni repo ha uno `update.sh` su cron ogni 5 minuti (senza `sudo`): fa `git fetch`, e solo se ci sono commit nuovi sul branch corrente fa pull, rebuild e riavvio.
 4. La homepage legge l'elenco delle app da `app/apps.js` e costruisce i link: `http://<host>:<lanPort>` in LAN, `https://<host>:<tsPort>` via Tailscale.
 
@@ -114,6 +114,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - Il kernel del Pi non applica i limiti di memoria dei container ("No memory limit support"): `mem_limit` nel compose di Parole non ha effetto finché non si aggiunge `cgroup_enable=memory cgroup_memory=1` a `/boot/firmware/cmdline.txt` (una sola riga) e si riavvia. Opzionale.
 - Dopo `usermod -aG docker` serve uscire e rientrare via SSH, altrimenti `docker` richiede `sudo`.
 - `tailscale up` stampa un link di login monouso da aprire nel browser.
+- **`tailscale serve` su una porta già usata sostituisce la regola precedente.** Il 2026-10-23 la 443 è finita su Sillabe e la 8443 su `127.0.0.1:8765`, e la homepage non si apriva più: rimesso `443 -> 8081` e spostato Sillabe sulla 10000. Prima di aggiungere un'app controllare sempre `tailscale serve status`.
 - **I cookie non distinguono le porte**: due app sullo stesso host (`vito:8081` e `vito:8087`) vedono gli stessi cookie. Se due app usano un cookie con lo stesso nome, entrare in una fa uscire dall'altra: per questo Minigiochi usa il cookie `minigiochi` e la homepage `giochi`.
 - Un `curl` lanciato subito dopo `docker compose up` può dare "Connection reset by peer": nginx non è ancora pronto. Basta riprovare dopo qualche secondo.
 - L'avviso nginx `duplicate MIME type "text/html"` è innocuo (l'HTML è già compresso di default).
