@@ -99,7 +99,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [x] Esercizi pubblici passati al dispositivo separato `parole-esercizi` (servizio `tailscale-public`, `COMPOSE_PROFILES=public` nel `.env` di parole). Funnel su `vito` spento, key expiry disattivata, link nuovi provati da rete mobile senza Tailscale.
 - [ ] Rimandare ai pazienti i link nuovi (`https://parole-esercizi.<tailnet>.ts.net/e/...`): quelli vecchi su `vito...:10000` non funzionano più.
 - [ ] Verificare che con il Relay privato acceso la homepage via Tailscale (`https://vito.<tailnet>.ts.net`) funzioni.
-- [ ] Nel crontab la riga di aggiornamento di parole era duplicata: togliere il doppione con `crontab -l | awk '!seen[$0]++' | crontab -`.
+- [x] Tolto il doppione della riga di aggiornamento di parole nel crontab.
 - [ ] Valutare i **gruppi di esercizi** di Parole (branch `claude/parole-gruppi-esercizi` della repo parole, non ancora sul Pi): più esercizi sotto un unico link, con pagina di scelta. Se piace, il Pi passa a quel branch; se no, si resta sul branch attuale. Si può tornare indietro senza perdere dati (i gruppi stanno in `groups.json`, ignorato dalla versione precedente).
 - [ ] Scegliere la prossima app da aggiungere.
 
