@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-10-24. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-10-23. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
