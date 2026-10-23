@@ -27,6 +27,8 @@ Il nome della tailnet si legge con `tailscale serve status` sul Pi o nel pannell
 
 Riquadro **Giochi** nella homepage, pagina `/giochi/`. Elenca da sola i file `.html` in `app/giochi/files/` della repo homepage (nginx genera l'elenco in JSON). Per aggiungere un gioco della mia ragazza: caricare il file in quella cartella, anche dal browser su GitHub (Add file > Upload files su `main`), ed entro 5 minuti compare. Nome dal `<title>`, icona da `<meta name="icona" content="🐶">`, descrizione da `<meta name="description">`. `memory-esempio.html` è solo un esempio.
 
+Si possono anche **caricare dalla pagina**: link "Gestisci giochi" in fondo, password `GIOCHI_PASSWORD` nel `.env` della homepage sul Pi. Il gioco compare subito. I giochi caricati stanno solo sul Pi (volume `homepage_giochi-caricati`, da includere nei backup) e si eliminano con la ✕ sul riquadro. Li gestisce il servizio `giochi` (cartella `uploader/` della repo homepage), raggiunto da nginx su `/giochi/api/`.
+
 ## Il Raspberry Pi
 
 - Raspberry Pi OS Lite 64-bit, installazione pulita, collegato in Wi-Fi.
