@@ -13,7 +13,7 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Homepage | `Vito-Pepe/homepage` | `http://192.168.1.22:8081` | `https://vito.<tailnet>.ts.net` (443) | 8081 |
 | Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://vito.<tailnet>.ts.net:8443` | 8080 |
 | Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `http://vito.<tailnet>.ts.net:8082` (http, cifrato da Tailscale) | 8082 |
-| Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.22:8083` | **Internet**: `https://vito.<tailnet>.ts.net:10000/e/<codice>` con `tailscale funnel` | 8083 |
+| Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.22:8083` | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/e/<codice>` (funnel da un dispositivo Tailscale separato, servizio `tailscale-public`; prima era `vito...:10000`) | 8083 |
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -96,6 +96,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] **Parole ha il login disattivato** (`DISABLE_LOGIN=1` nel file `~/parole/.env` sul Pi, aggiunto temporaneamente). Per rimetterlo: `docker run --rm -v parole_parole-data:/data alpine rm /data/settings.json`, `sed -i '/^DISABLE_LOGIN/d' ~/parole/.env`, `docker compose up -d` (il codice torna `7777`).
 - [ ] (Opzionale) Attivare il limite di memoria dei container, vedi sopra.
 - [ ] Revisione di sicurezza dedicata del server di Parole prima di un uso esteso.
+- [ ] Passare gli esercizi pubblici al dispositivo separato `parole-esercizi` (servizio `tailscale-public`, istruzioni nel README di parole), spegnere il funnel su `vito` e rimandare i link ai pazienti. Poi verificare che con il Relay privato acceso la homepage via Tailscale funzioni.
 - [ ] Valutare i **gruppi di esercizi** di Parole (branch `claude/parole-gruppi-esercizi` della repo parole, non ancora sul Pi): più esercizi sotto un unico link, con pagina di scelta. Se piace, il Pi passa a quel branch; se no, si resta sul branch attuale. Si può tornare indietro senza perdere dati (i gruppi stanno in `groups.json`, ignorato dalla versione precedente).
 - [ ] Scegliere la prossima app da aggiungere.
 
