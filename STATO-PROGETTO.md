@@ -100,7 +100,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] Rimandare ai pazienti i link nuovi (`https://parole-esercizi.<tailnet>.ts.net/e/...`): quelli vecchi su `vito...:10000` non funzionano più.
 - [ ] Verificare che con il Relay privato acceso la homepage via Tailscale (`https://vito.<tailnet>.ts.net`) funzioni.
 - [x] Tolto il doppione della riga di aggiornamento di parole nel crontab.
-- [ ] Valutare i **gruppi di esercizi** di Parole (branch `claude/parole-gruppi-esercizi` della repo parole, non ancora sul Pi): più esercizi sotto un unico link, con pagina di scelta. Se piace, il Pi passa a quel branch; se no, si resta sul branch attuale. Si può tornare indietro senza perdere dati (i gruppi stanno in `groups.json`, ignorato dalla versione precedente).
+- [x] **Gruppi di esercizi** di Parole adottati: più esercizi sotto un unico link, con pagina di scelta e titolo per il bambino. Sono sul branch che usa il Pi. Per tornare indietro: revert del commit `febaf42` nella repo parole (i gruppi stanno in `groups.json`, ignorato dalla versione senza gruppi).
 - [ ] Scegliere la prossima app da aggiungere.
 
 ## Per riprendere con Claude
