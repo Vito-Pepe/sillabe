@@ -96,7 +96,10 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] **Parole ha il login disattivato** (`DISABLE_LOGIN=1` nel file `~/parole/.env` sul Pi, aggiunto temporaneamente). Per rimetterlo: `docker run --rm -v parole_parole-data:/data alpine rm /data/settings.json`, `sed -i '/^DISABLE_LOGIN/d' ~/parole/.env`, `docker compose up -d` (il codice torna `7777`).
 - [ ] (Opzionale) Attivare il limite di memoria dei container, vedi sopra.
 - [ ] Revisione di sicurezza dedicata del server di Parole prima di un uso esteso.
-- [ ] Passare gli esercizi pubblici al dispositivo separato `parole-esercizi` (servizio `tailscale-public`, istruzioni nel README di parole), spegnere il funnel su `vito` e rimandare i link ai pazienti. Poi verificare che con il Relay privato acceso la homepage via Tailscale funzioni.
+- [x] Esercizi pubblici passati al dispositivo separato `parole-esercizi` (servizio `tailscale-public`, `COMPOSE_PROFILES=public` nel `.env` di parole). Funnel su `vito` spento, key expiry disattivata, link nuovi provati da rete mobile senza Tailscale.
+- [ ] Rimandare ai pazienti i link nuovi (`https://parole-esercizi.<tailnet>.ts.net/e/...`): quelli vecchi su `vito...:10000` non funzionano più.
+- [ ] Verificare che con il Relay privato acceso la homepage via Tailscale (`https://vito.<tailnet>.ts.net`) funzioni.
+- [ ] Nel crontab la riga di aggiornamento di parole era duplicata: togliere il doppione con `crontab -l | awk '!seen[$0]++' | crontab -`.
 - [ ] Valutare i **gruppi di esercizi** di Parole (branch `claude/parole-gruppi-esercizi` della repo parole, non ancora sul Pi): più esercizi sotto un unico link, con pagina di scelta. Se piace, il Pi passa a quel branch; se no, si resta sul branch attuale. Si può tornare indietro senza perdere dati (i gruppi stanno in `groups.json`, ignorato dalla versione precedente).
 - [ ] Scegliere la prossima app da aggiungere.
 
