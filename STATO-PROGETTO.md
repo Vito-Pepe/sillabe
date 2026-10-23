@@ -29,6 +29,8 @@ Riquadro **Giochi** nella homepage, pagina `/giochi/`. Elenca da sola i file `.h
 
 Si possono anche **caricare dalla pagina**: link "Gestisci giochi" in fondo, password `GIOCHI_PASSWORD` nel `.env` della homepage sul Pi. Il gioco compare subito. I giochi caricati stanno solo sul Pi (volume `homepage_giochi-caricati`, da includere nei backup) e si eliminano con la ✕ sul riquadro. Li gestisce il servizio `giochi` (cartella `uploader/` della repo homepage), raggiunto da nginx su `/giochi/api/`.
 
+**Gruppi di giochi (link per i genitori)**: in "Gestisci giochi" si creano gruppi di uno o più giochi, ognuno con un link pubblico `https://parole-esercizi.<tailnet>.ts.net/g/<codice>` (Copia, Modifica, Nuovo link, Elimina). Con più giochi il link apre una pagina di scelta, con uno solo va dritto al gioco. I giochi sono serviti in sandbox, con uno script aggiunto al volo che fa tornare "← Giochi" alla pagina di scelta (o lo nasconde). Lo serve la porta pubblica del servizio `giochi` (`127.0.0.1:8084`) tramite l'ingresso di Parole (percorso `/g/` in `tailscale/serve.json` della repo parole). Indirizzo base in `GIOCHI_PUBLIC_URL` nel `.env` della homepage; gruppi nel volume `homepage_giochi-stato`. Container della homepage isolati dalla LAN con `firewall/giochi-firewall.sh` (bridge `br-giochi`). Non ci sono più link per singolo gioco.
+
 ## Il Raspberry Pi
 
 - Raspberry Pi OS Lite 64-bit, installazione pulita, collegato in Wi-Fi.
