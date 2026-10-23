@@ -23,6 +23,10 @@ Il nome della tailnet si legge con `tailscale serve status` sul Pi o nel pannell
 
 **Il Pi segue `main`** in tutte e tre le repo. Flusso di lavoro: le modifiche si fanno su un branch, si apre una pull request verso `main` e la si unisce su GitHub con **"Create a merge commit"** (non squash né rebase). Entro 5 minuti il cron aggiorna il Pi. Per annullare una modifica: pulsante "Revert" sulla PR unita. Il branch `claude/docker-sillabe-raspberry-njmc8b` è quello di lavoro della prima sessione; in parole, `claude/parole-gruppi-esercizi` è già tutto dentro `main` e si può cancellare.
 
+### Giochi (sezione della homepage)
+
+Riquadro **Giochi** nella homepage, pagina `/giochi/`. Elenca da sola i file `.html` in `app/giochi/files/` della repo homepage (nginx genera l'elenco in JSON). Per aggiungere un gioco della mia ragazza: caricare il file in quella cartella, anche dal browser su GitHub (Add file > Upload files su `main`), ed entro 5 minuti compare. Nome dal `<title>`, icona da `<meta name="icona" content="🐶">`, descrizione da `<meta name="description">`. `memory-esempio.html` è solo un esempio.
+
 ## Il Raspberry Pi
 
 - Raspberry Pi OS Lite 64-bit, installazione pulita, collegato in Wi-Fi.
