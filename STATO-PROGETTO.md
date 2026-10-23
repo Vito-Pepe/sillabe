@@ -21,7 +21,7 @@ Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle 
 
 Il nome della tailnet si legge con `tailscale serve status` sul Pi o nel pannello admin Tailscale.
 
-Tutte le repo hanno il lavoro sul branch `claude/docker-sillabe-raspberry-njmc8b`. **Non è stato fatto il merge su `main`**: il Pi clona e segue questo branch.
+**Il Pi segue `main`** in tutte e tre le repo. Flusso di lavoro: le modifiche si fanno su un branch, si apre una pull request verso `main` e la si unisce su GitHub con **"Create a merge commit"** (non squash né rebase). Entro 5 minuti il cron aggiorna il Pi. Per annullare una modifica: pulsante "Revert" sulla PR unita. Il branch `claude/docker-sillabe-raspberry-njmc8b` è quello di lavoro della prima sessione; in parole, `claude/parole-gruppi-esercizi` è già tutto dentro `main` e si può cancellare.
 
 ## Il Raspberry Pi
 
@@ -66,7 +66,7 @@ cd ~/sillabe && docker compose logs --tail 30 sillabe
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
 2. Porta locale libera diversa da 8080 e 8081 (es. 8082).
-3. Sul Pi: `git clone -b <branch> ...`, `docker compose up --build -d`, riga di cron per `update.sh`.
+3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Pubblicazione: `sudo tailscale serve --bg --https=<porta> localhost:<porta-locale>`.
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsPort`.
 
@@ -88,7 +88,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 
 - [ ] Disattivare la scadenza della chiave per `vito` (pannello Tailscale > Machines > Disable key expiry), altrimenti il Pi esce dalla tailnet dopo circa 180 giorni.
 - [ ] Verificare nel pannello Tailscale (DNS) che MagicDNS e HTTPS Certificates siano attivi.
-- [ ] Decidere se fare il merge dei branch su `main` (poi far passare il Pi a `main` e non cancellare il branch finché il Pi lo segue).
+- [x] Branch uniti in `main` in tutte e tre le repo (PR #1) e Pi passato a seguire `main`.
 - [x] Assegnare un IP fisso al Pi dal router (fatto).
 - [ ] Rimuovere dal pannello Tailscale i dispositivi vecchi offline (anche un `pihole` di quasi un anno fa).
 - [x] Deploy di Parole sul Pi e attivazione di `tailscale funnel` (fatto, link provato da fuori casa).
@@ -100,7 +100,7 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [ ] Rimandare ai pazienti i link nuovi (`https://parole-esercizi.<tailnet>.ts.net/e/...`): quelli vecchi su `vito...:10000` non funzionano più.
 - [ ] Verificare che con il Relay privato acceso la homepage via Tailscale (`https://vito.<tailnet>.ts.net`) funzioni.
 - [x] Tolto il doppione della riga di aggiornamento di parole nel crontab.
-- [x] **Gruppi di esercizi** di Parole adottati: più esercizi sotto un unico link, con pagina di scelta e titolo per il bambino. Sono sul branch che usa il Pi. Per tornare indietro: revert del commit `febaf42` nella repo parole (i gruppi stanno in `groups.json`, ignorato dalla versione senza gruppi).
+- [x] **Gruppi di esercizi** di Parole adottati: più esercizi sotto un unico link, con pagina di scelta e titolo per il bambino. Sono in `main`. Per tornare indietro: revert del commit `febaf42` nella repo parole (i gruppi stanno in `groups.json`, ignorato dalla versione senza gruppi).
 - [ ] Scegliere la prossima app da aggiungere.
 
 ## Per riprendere con Claude
