@@ -11,13 +11,16 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | App | Repo | LAN (http) | Tailscale (https) | Porta locale sul Pi |
 |---|---|---|---|---|
 | Homepage | `Vito-Pepe/homepage` | `http://192.168.1.22:8081` | `https://vito.<tailnet>.ts.net` (443) | 8081 |
-| Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://vito.<tailnet>.ts.net:10000` (era 8443) | 8080 |
-| Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `http://vito.<tailnet>.ts.net:8082` (http, cifrato da Tailscale) | 8082 |
+| Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://sillabe.<tailnet>.ts.net` | 8080 |
+| Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `https://parole.<tailnet>.ts.net` | 8082 |
 | Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.22:8083` | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/e/<codice>` (funnel da un dispositivo Tailscale separato, servizio `tailscale-public`; prima era `vito...:10000`) | 8083 |
 | Giochi della homepage (link pubblici) | `Vito-Pepe/homepage` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/g/<codice>` | 127.0.0.1:8084 |
-| Chess | `Vito-Pepe/Chess` | `http://192.168.1.22:8085` | `http://vito:8085` (http) | 8085 |
-| Minigiochi | `Vito-Pepe/minigiochi` | `http://192.168.1.22:8087` | `http://vito:8087` (http) | 8087 |
+| Chess | `Vito-Pepe/Chess` | `http://192.168.1.22:8085` | `https://chess.<tailnet>.ts.net` | 8085 |
+| Minigiochi | `Vito-Pepe/minigiochi` | `http://192.168.1.22:8087` | `https://minigiochi.<tailnet>.ts.net` | 8087 |
 | Minigiochi (link pubblici) | `Vito-Pepe/minigiochi` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/m/<codice>` | 127.0.0.1:8086 |
+| Meteo | (aggiunta fuori da queste sessioni, cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
+
+**Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
 Porte occupate sul Pi: 8080–8087 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
@@ -57,7 +60,7 @@ Differenze dal codice della homepage: gestione su `/api/` (non `/giochi/api/`), 
 ## Come funziona
 
 1. Ogni app è un sito statico servito da nginx in un container (`docker compose`), con la porta pubblicata su tutte le interfacce, quindi raggiungibile dalla LAN.
-2. `tailscale serve` pubblica le porte locali sulla tailnet in HTTPS: `443 -> localhost:8081` (homepage), `10000 -> localhost:8080` (Sillabe) e `8443 -> localhost:8765` (un'altra app, aggiunta fuori da queste sessioni: probabilmente "meteo", in `~/parole/meteo`). Funziona solo per i dispositivi autenticati sulla tailnet, da qualunque rete.
+2. Il `tailscale serve` del Pi pubblica solo la homepage: `443 -> localhost:8081` (`https://vito.<tailnet>.ts.net`). Le altre app hanno un dispositivo Tailscale ciascuna (repo `ingressi-https`): `https://<app>.<tailnet>.ts.net -> localhost:<porta>`. Le vecchie regole `8443` (meteo) e `10000` (Sillabe) sul Pi sono state spente. Funziona solo per i dispositivi autenticati sulla tailnet, da qualunque rete.
 3. Ogni repo ha uno `update.sh` su cron ogni 5 minuti (senza `sudo`): fa `git fetch`, e solo se ci sono commit nuovi sul branch corrente fa pull, rebuild e riavvio.
 4. La homepage legge l'elenco delle app da `app/apps.js` e costruisce i link: `http://<host>:<lanPort>` in LAN, `https://<host>:<tsPort>` via Tailscale.
 
@@ -98,10 +101,8 @@ cd ~/sillabe && docker compose logs --tail 30 sillabe
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
 2. Porta locale libera: oggi 8080–8087 sono occupate, quindi dalla 8088 in su (verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
-4. Pubblicazione: `sudo tailscale serve --bg --https=<porta> localhost:<porta-locale>`.
-5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsPort`.
-
-Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma tipicamente 443, 8443 e 10000). Con Parole sono tutte usate: per la quarta app serve un reverse proxy locale (es. Caddy o nginx) con un percorso o un sottodominio per app.
+4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti.
+5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
 
 ## Cose imparate
 
@@ -137,6 +138,8 @@ Attenzione: `tailscale serve` accetta in HTTPS poche porte (da verificare, ma ti
 - [x] Tolto il doppione della riga di aggiornamento di parole nel crontab.
 - [x] **Gruppi di esercizi** di Parole adottati: più esercizi sotto un unico link, con pagina di scelta e titolo per il bambino. Sono in `main`. Per tornare indietro: revert del commit `febaf42` nella repo parole (i gruppi stanno in `groups.json`, ignorato dalla versione senza gruppi).
 - [x] Aggiunte Chess (porta 8085) e Minigiochi (porta 8087, firewall verificato, link `/m/` provato da rete mobile).
+- [x] Indirizzi HTTPS senza porta per tutte le app (repo `ingressi-https`), provati dal telefono.
+- [ ] Disable key expiry su `sillabe`, `parole`, `minigiochi`, `chess`, `meteo` nel pannello Tailscale, e revocare la auth key riutilizzabile usata per crearli.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8088).
 
 ## Per riprendere con Claude
