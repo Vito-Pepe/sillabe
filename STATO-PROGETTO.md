@@ -144,4 +144,4 @@ cd ~/sillabe && docker compose logs --tail 30 sillabe
 
 ## Per riprendere con Claude
 
-Apri una sessione sulla repo `sillabe` e di' di leggere questo file e `TAILSCALE.md`. Se vuoi che Claude esegua i comandi direttamente sul Pi, usa Claude Code installato sul Mac (stessa rete del Pi) e dagli IP e utente del Pi.
+Apri una sessione sulla repo `sillabe` e di' di leggere questo file e `TAILSCALE.md`. Per un **progetto nuovo** da far girare sul Pi (anche in una sessione su un'altra repo), fai leggere prima `INFRASTRUTTURA-PI.md`: elenca porte, nomi, reti, volumi, dispositivi Tailscale e percorsi pubblici già occupati, con la checklist per non creare conflitti. Link: `https://raw.githubusercontent.com/Vito-Pepe/sillabe/main/INFRASTRUTTURA-PI.md`. Se vuoi che Claude esegua i comandi direttamente sul Pi, usa Claude Code installato sul Mac (stessa rete del Pi) e dagli IP e utente del Pi.
