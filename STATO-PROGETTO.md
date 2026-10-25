@@ -10,17 +10,17 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 
 | App | Repo | LAN (http) | Tailscale (https) | Porta locale sul Pi |
 |---|---|---|---|---|
-| Homepage | `Vito-Pepe/homepage` | `http://192.168.1.22:8081` | `https://vito.<tailnet>.ts.net` (443) | 8081 |
-| Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.22:8080` | `https://sillabe.<tailnet>.ts.net` | 8080 |
-| Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.22:8082` | `https://parole.<tailnet>.ts.net` | 8082 |
-| Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.22:8083` | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/e/<codice>` (funnel da un dispositivo Tailscale separato, servizio `tailscale-public`; prima era `vito...:10000`) | 8083 |
+| Homepage | `Vito-Pepe/homepage` | `http://192.168.1.20:8081` | `https://vito.<tailnet>.ts.net` (443) | 8081 |
+| Sillabe | `Vito-Pepe/sillabe` | `http://192.168.1.20:8080` | `https://sillabe.<tailnet>.ts.net` | 8080 |
+| Parole (app) | `Vito-Pepe/parole` | `http://192.168.1.20:8082` | `https://parole.<tailnet>.ts.net` | 8082 |
+| Parole (esercizi pubblici) | `Vito-Pepe/parole` | `http://192.168.1.20:8083` | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/e/<codice>` (funnel da un dispositivo Tailscale separato, servizio `tailscale-public`; prima era `vito...:10000`) | 8083 |
 | Giochi della homepage (link pubblici) | `Vito-Pepe/homepage` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/g/<codice>` | 127.0.0.1:8084 |
-| Chess | `Vito-Pepe/Chess` | `http://192.168.1.22:8085` | `https://chess.<tailnet>.ts.net` | 8085 |
-| Minigiochi | `Vito-Pepe/minigiochi` | `http://192.168.1.22:8087` | `https://minigiochi.<tailnet>.ts.net` | 8087 |
+| Chess | `Vito-Pepe/Chess` | `http://192.168.1.20:8085` | `https://chess.<tailnet>.ts.net` | 8085 |
+| Minigiochi | `Vito-Pepe/minigiochi` | `http://192.168.1.20:8087` | `https://minigiochi.<tailnet>.ts.net` | 8087 |
 | Minigiochi (link pubblici) | `Vito-Pepe/minigiochi` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/m/<codice>` | 127.0.0.1:8086 |
 | Meteo | (aggiunta fuori da queste sessioni, cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
 
-**Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
+**Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.20:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
 Porte occupate sul Pi: 8080–8087 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
@@ -50,9 +50,9 @@ Differenze dal codice della homepage: gestione su `/api/` (non `/giochi/api/`), 
 
 ## Il Raspberry Pi
 
-- Raspberry Pi OS Lite 64-bit, installazione pulita, collegato in Wi-Fi.
-- Hostname `vito`, utente `pepe`, IP in LAN `192.168.1.22` (fisso, assegnato dal router).
-- Accesso: `ssh pepe@192.168.1.22`. Il nome `vito.local` non sempre risolve.
+- Raspberry Pi OS Lite 64-bit, installazione pulita. Collegato **via cavo** (`eth0`, 1 Gbit/s, connessione usata) e in Wi-Fi come riserva (`wlan0`).
+- Hostname `vito`, utente `pepe`. IP in LAN: `192.168.1.20` sul cavo (da prenotare nel router per il MAC `2c:cf:67:63:4f:f6`) e `192.168.1.22` sul Wi-Fi (fisso, assegnato dal router).
+- Accesso: `ssh pepe@192.168.1.20` (cavo) o `ssh pepe@192.168.1.22` (Wi-Fi). Il nome `vito.local` non sempre risolve.
 - Installati: Docker + plugin compose (script get.docker.com), Tailscale (script ufficiale), git, cron.
 - Tailscale gira sull'host, non in un container. Il Pi compare nella tailnet come `vito` (`100.96.58.127`).
 - Raspberry Pi Connect non attivato (non serve).

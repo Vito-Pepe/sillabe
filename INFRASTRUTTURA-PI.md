@@ -16,17 +16,17 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 
 | | |
 |---|---|
-| Hardware | Raspberry Pi 5, Wi-Fi |
+| Hardware | Raspberry Pi 5, **cavo Ethernet** (1 Gbit/s, connessione usata) + Wi-Fi collegato come riserva |
 | Sistema | Raspberry Pi OS Lite 64-bit (arm64): le immagini Docker devono essere multi-arch o arm64 |
 | Hostname | `vito` |
 | Utente | `pepe` (nel gruppo `docker`: `docker` senza `sudo`) |
-| IP in LAN | `192.168.1.22` (fisso, dal router) |
+| IP in LAN | **`192.168.1.20`** sul cavo (`eth0`, MAC `2c:cf:67:63:4f:f6`) e `192.168.1.22` sul Wi-Fi (`wlan0`, fisso dal router). Con entrambi attivi il traffico passa dal cavo; se il cavo si stacca il Pi passa da solo al Wi-Fi. Rete gestita da NetworkManager con netplan (`nmcli device status`) |
 | IP Tailscale | `100.96.58.127` |
 | Tailscale | installato **sull'host** (non in un container), dispositivo `vito` |
 | Docker | Docker Engine + plugin compose (`docker compose`, non `docker-compose`) |
 | Limiti di memoria | **non applicati**: il kernel non ha il cgroup memory attivo, `mem_limit` nel compose dà solo un avviso |
 
-**Accesso:** l'utente lavora via SSH, anche da iPhone con Termius, verso `100.96.58.127` o `192.168.1.22`. **Claude non può fare SSH sul Pi** da una sessione cloud: prepara i comandi e l'utente li incolla. Comandi a blocchi, uno per passaggio, con l'output atteso.
+**Accesso:** l'utente lavora via SSH, anche da iPhone con Termius, verso `100.96.58.127` (Tailscale), `192.168.1.20` (cavo) o `192.168.1.22` (Wi-Fi). **Claude non può fare SSH sul Pi** da una sessione cloud: prepara i comandi e l'utente li incolla. Comandi a blocchi, uno per passaggio, con l'output atteso.
 
 ---
 
@@ -60,7 +60,7 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 
 | App | Repo | Cartella sul Pi | Progetto compose | LAN | Tailnet (HTTPS, senza porta) |
 |---|---|---|---|---|---|
-| Homepage (+ sezione Giochi) | `homepage` | `~/homepage` | `homepage` | `http://192.168.1.22:8081` | `https://vito.<tailnet>.ts.net` |
+| Homepage (+ sezione Giochi) | `homepage` | `~/homepage` | `homepage` | `http://192.168.1.20:8081` | `https://vito.<tailnet>.ts.net` |
 | Sillabe | `sillabe` | `~/sillabe` | `sillabe` | `:8080` | `https://sillabe.<tailnet>.ts.net` |
 | Parole | `parole` | `~/parole` | `parole` | `:8082` | `https://parole.<tailnet>.ts.net` |
 | Chess | `Chess` | `~/Chess` | `chess` | `:8085` | `https://chess.<tailnet>.ts.net` |
@@ -218,6 +218,7 @@ Note:
 
 ## 10. Cose aperte (da sapere)
 
+- L'indirizzo via cavo `192.168.1.20` va **prenotato nel router** (Wind3 HUB) per il MAC `2c:cf:67:63:4f:f6`, come già `192.168.1.22` per il Wi-Fi: finché non lo è, potrebbe cambiare. Gli indirizzi Tailscale non dipendono da questo.
 - Parole ha il login **disattivato** (`DISABLE_LOGIN=1` nel `~/parole/.env`), in via temporanea.
 - `vito` risulta ancora pubblicato nel DNS pubblico (residuo del vecchio funnel). Per toglierlo andrebbe ristretto il permesso funnel con un tag su `parole-esercizi` nelle regole del pannello Tailscale: rimandato dall'utente.
 - La cartella `~/parole/meteo` sta dentro la clone di Parole: non dà problemi (non entra nell'immagine, git la ignora), ma un progetto nuovo va messo in `~/<nome>`, non dentro un'altra repo.
