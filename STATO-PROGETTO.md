@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-10-23. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-10-25. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
@@ -18,11 +18,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Chess | `Vito-Pepe/Chess` | `http://192.168.1.22:8085` | `https://chess.<tailnet>.ts.net` | 8085 |
 | Minigiochi | `Vito-Pepe/minigiochi` | `http://192.168.1.22:8087` | `https://minigiochi.<tailnet>.ts.net` | 8087 |
 | Minigiochi (link pubblici) | `Vito-Pepe/minigiochi` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/m/<codice>` | 127.0.0.1:8086 |
+| onlineEmu (giochi retro) | `Vito-Pepe/onlineEmu` | `http://192.168.1.22:8088` | `https://retro.<tailnet>.ts.net` | 8088 |
 | Meteo | (aggiunta fuori da queste sessioni, cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
-Porte occupate sul Pi: 8080–8087 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
+Porte occupate sul Pi: 8080–8088 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -96,10 +97,16 @@ sudo minigiochi-firewall.sh status
 cd ~/sillabe && docker compose logs --tail 30 sillabe
 ```
 
+### onlineEmu (giochi retro)
+
+Repo `onlineEmu`, pagina `http://vito:8088` o `https://retro.<tailnet>.ts.net`. È **RomM** (immagine `rommapp/romm`, versione fissata nel compose) con l'emulatore **EmulatorJS** integrato: il Pi conserva giochi, copertine e salvataggi, il gioco gira nel browser del dispositivo (scelta "opzione C": niente streaming, nessuna latenza). Per ora Game Boy Advance; la PS1 più avanti, quando ci sarà il BIOS estratto dalla PS1 di casa (con lo streaming dal Pi come possibile aggiunta solo per la PS1).
+
+Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segreti generati sul Pi nel `.env`, giochi e salvataggi nella cartella `~/onlineEmu/dati/` (fuori da git). Account amministratore creato al primo accesso. Su iPhone: "Aggiungi alla schermata Home". Istruzioni nel README della repo.
+
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera: oggi 8080–8087 sono occupate, quindi dalla 8088 in su (verificare con `ss -ltn | grep ':80'`).
+2. Porta locale libera: oggi 8080–8088 sono occupate, quindi dalla 8089 in su (verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti.
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
@@ -140,7 +147,9 @@ cd ~/sillabe && docker compose logs --tail 30 sillabe
 - [x] Aggiunte Chess (porta 8085) e Minigiochi (porta 8087, firewall verificato, link `/m/` provato da rete mobile).
 - [x] Indirizzi HTTPS senza porta per tutte le app (repo `ingressi-https`), provati dal telefono.
 - [ ] Disable key expiry su `sillabe`, `parole`, `minigiochi`, `chess`, `meteo` nel pannello Tailscale, e revocare la auth key riutilizzabile usata per crearli.
-- [ ] Scegliere la prossima app da aggiungere (dalla porta 8088).
+- [ ] Installare onlineEmu sul Pi (README della repo), dispositivo `retro` in `ingressi-https` (auth key, Disable key expiry) e primo gioco GBA.
+- [ ] onlineEmu: estrarre il BIOS della PS1 e aggiungere la PS1.
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8089).
 
 ## Per riprendere con Claude
 
