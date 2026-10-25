@@ -6,6 +6,8 @@ Ultimo aggiornamento: 2026-10-24.
 > Sul Pi girano già diverse app. Porte, nomi di container, reti, volumi, nomi Tailscale, percorsi pubblici e cookie elencati qui sotto **sono occupati**: non darli per liberi. In caso di dubbio non indovinare, ma chiedi all'utente di lanciare i comandi della sezione 9 e lavora sul loro output.
 > Questo file può essere rimasto indietro rispetto al Pi: lo stato vero è quello che dicono quei comandi.
 
+**Ogni sessione che aggiunge, cambia o toglie qualcosa di infrastrutturale sul Pi aggiorna questo file con una PR sulla repo `Vito-Pepe/sillabe`, nello stesso lavoro.** Come viene letto in automatico: sezione 11.
+
 Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto a questo file: `https://raw.githubusercontent.com/Vito-Pepe/sillabe/main/INFRASTRUTTURA-PI.md`.
 
 ---
@@ -186,7 +188,8 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 8. **HTTPS senza porta**: nella repo `ingressi-https` aggiungere `serve/<nome>.json` (copiandone uno e cambiando la porta) e un servizio nel compose con `TS_HOSTNAME: <nome>` e il suo volume. Al primo avvio serve una auth key (Reusable o monouso, non Ephemeral), poi Disable key expiry e revoca della chiave. **Mai** `tailscale serve` sull'host.
 9. **Homepage**: una riga in `homepage/app/apps.js` con `lanPort` e `tsHost: "<nome>"`.
 10. **Parte pubblica** (se serve): prefisso nuovo in `parole/tailscale/serve.json` verso `127.0.0.1:<porta>`, poi ricreare `tailscale-public` (sezione 4).
-11. **Aggiornare questo file** (porte, nomi, volumi, cron) nella stessa PR o subito dopo.
+11. **`CLAUDE.md`** nella repo nuova, copiato da una delle repo esistenti (sezione 11).
+12. **Aggiornare questo file** (porte, nomi, volumi, cron) con una PR sulla repo `sillabe`, nello stesso lavoro.
 
 ---
 
@@ -219,3 +222,40 @@ Note:
 - `vito` risulta ancora pubblicato nel DNS pubblico (residuo del vecchio funnel). Per toglierlo andrebbe ristretto il permesso funnel con un tag su `parole-esercizi` nelle regole del pannello Tailscale: rimandato dall'utente.
 - La cartella `~/parole/meteo` sta dentro la clone di Parole: non dà problemi (non entra nell'immagine, git la ignora), ma un progetto nuovo va messo in `~/<nome>`, non dentro un'altra repo.
 - Meteo e Chess non sono stati sviluppati in queste sessioni: per dettagli sulle loro configurazioni guardare le loro repo o chiedere all'utente.
+
+---
+
+## 11. Come le sessioni di Claude leggono e aggiornano questo file
+
+Due livelli, perché nessuna sessione parta senza saperlo:
+
+1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
+2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questo testo, che a ogni nuova sessione scrive le stesse istruzioni come impostazioni personali di Claude Code. Se si usano più ambienti, va messo in ognuno. Su un Mac con Claude Code installato, lo stesso testo (senza le righe `mkdir`, `cat` ed `EOF`) va in `~/.claude/CLAUDE.md`.
+
+```bash
+mkdir -p ~/.claude
+cat > ~/.claude/CLAUDE.md <<'EOF'
+# Istruzioni personali per Claude
+
+## Lingua
+
+Rispondi sempre in italiano, anche nei commit, nelle PR e nei commenti al codice.
+
+## Raspberry Pi: infrastruttura condivisa
+
+Le app dell'utente girano su un Raspberry Pi 5 (Docker + Tailscale): vale per ogni progetto che deve girare sul Pi, anche in una repo nuova. L'elenco di tutto ciò che è già occupato sul Pi (porte, cartelle, progetti compose, container, reti e bridge, firewall, volumi, dispositivi e percorsi Tailscale, cron, nomi dei cookie) è nel file **`INFRASTRUTTURA-PI.md` della repo `Vito-Pepe/sillabe`**:
+https://raw.githubusercontent.com/Vito-Pepe/sillabe/main/INFRASTRUTTURA-PI.md
+
+- **Leggilo prima** di scegliere o cambiare porte, nomi, reti, volumi, `tailscale serve`/funnel, cron o firewall, e prima di dare comandi da eseguire sul Pi. Non dare per libero niente di ciò che elenca; nel dubbio fai lanciare all'utente i comandi della sua sezione 9 e lavora sul loro output.
+- Se non riesci a scaricarlo, aggiungi la repo `Vito-Pepe/sillabe` alla sessione e leggilo da lì.
+- **Tienilo aggiornato**: se il tuo lavoro aggiunge, cambia o toglie qualcosa di infrastrutturale sul Pi, aggiorna `INFRASTRUTTURA-PI.md` nella repo `Vito-Pepe/sillabe` (aggiungila alla sessione con accesso in scrittura) con una PR, e dai all'utente il link diretto. Fallo nello stesso lavoro, non "dopo".
+- Mai `tailscale serve` sull'host del Pi per una nuova app: gli indirizzi HTTPS si aggiungono nella repo `Vito-Pepe/ingressi-https`.
+
+## Come lavorare con l'utente
+
+- Il Pi segue `main`. Lavora su un branch e apri una PR verso `main`; l'utente la unisce su GitHub con **"Create a merge commit"** e non cancella il branch. Dai sempre il **link diretto** della PR e, prima di chiedere di unirla, verifica che sia ancora aperta.
+- Claude non può fare SSH sul Pi: prepara i comandi a blocchi, da incollare uno alla volta, con l'output atteso. Segreti solo nel `.env` sul Pi, mai su git.
+- Claude non può creare repo su GitHub (403): se serve una repo nuova, chiedi all'utente di crearla (Public, con "Add a README file").
+- Una repo nuova che girerà sul Pi deve avere anche lei un `CLAUDE.md` con queste istruzioni (copialo da una delle repo esistenti).
+EOF
+```
