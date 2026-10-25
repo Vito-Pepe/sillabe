@@ -230,32 +230,12 @@ Note:
 Due livelli, perché nessuna sessione parta senza saperlo:
 
 1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
-2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questo testo, che a ogni nuova sessione scrive le stesse istruzioni come impostazioni personali di Claude Code. Se si usano più ambienti, va messo in ognuno. Su un Mac con Claude Code installato, lo stesso testo (senza le righe `mkdir`, `cat` ed `EOF`) va in `~/.claude/CLAUDE.md`.
+2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Le istruzioni stanno in **`claude-utente.md`** (questa repo); lo script le scarica a ogni nuova sessione e le mette tra le impostazioni personali di Claude Code (`~/.claude/CLAUDE.md`), così una modifica a `claude-utente.md` vale da sola per le sessioni successive. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questa riga; se si usano più ambienti, va messa in ognuno:
 
 ```bash
-mkdir -p ~/.claude
-cat > ~/.claude/CLAUDE.md <<'EOF'
-# Istruzioni personali per Claude
-
-## Lingua
-
-Rispondi sempre in italiano, anche nei commit, nelle PR e nei commenti al codice.
-
-## Raspberry Pi: infrastruttura condivisa
-
-Le app dell'utente girano su un Raspberry Pi 5 (Docker + Tailscale): vale per ogni progetto che deve girare sul Pi, anche in una repo nuova. L'elenco di tutto ciò che è già occupato sul Pi (porte, cartelle, progetti compose, container, reti e bridge, firewall, volumi, dispositivi e percorsi Tailscale, cron, nomi dei cookie) è nel file **`INFRASTRUTTURA-PI.md` della repo `Vito-Pepe/sillabe`**:
-https://raw.githubusercontent.com/Vito-Pepe/sillabe/main/INFRASTRUTTURA-PI.md
-
-- **Leggilo prima** di scegliere o cambiare porte, nomi, reti, volumi, `tailscale serve`/funnel, cron o firewall, e prima di dare comandi da eseguire sul Pi. Non dare per libero niente di ciò che elenca; nel dubbio fai lanciare all'utente i comandi della sua sezione 9 e lavora sul loro output.
-- Se non riesci a scaricarlo, aggiungi la repo `Vito-Pepe/sillabe` alla sessione e leggilo da lì.
-- **Tienilo aggiornato**: se il tuo lavoro aggiunge, cambia o toglie qualcosa di infrastrutturale sul Pi, aggiorna `INFRASTRUTTURA-PI.md` nella repo `Vito-Pepe/sillabe` (aggiungila alla sessione con accesso in scrittura) con una PR, e dai all'utente il link diretto. Fallo nello stesso lavoro, non "dopo".
-- Mai `tailscale serve` sull'host del Pi per una nuova app: gli indirizzi HTTPS si aggiungono nella repo `Vito-Pepe/ingressi-https`.
-
-## Come lavorare con l'utente
-
-- Il Pi segue `main`. Lavora su un branch e apri una PR verso `main`; l'utente la unisce su GitHub con **"Create a merge commit"** e non cancella il branch. Dai sempre il **link diretto** della PR e, prima di chiedere di unirla, verifica che sia ancora aperta.
-- Claude non può fare SSH sul Pi: prepara i comandi a blocchi, da incollare uno alla volta, con l'output atteso. Segreti solo nel `.env` sul Pi, mai su git.
-- Claude non può creare repo su GitHub (403): se serve una repo nuova, chiedi all'utente di crearla (Public, con "Add a README file").
-- Una repo nuova che girerà sul Pi deve avere anche lei un `CLAUDE.md` con queste istruzioni (copialo da una delle repo esistenti).
-EOF
+mkdir -p ~/.claude && curl -fsSL https://raw.githubusercontent.com/Vito-Pepe/sillabe/main/claude-utente.md -o ~/.claude/CLAUDE.md || true
 ```
+
+`|| true`: se il download non riesce, la sessione parte lo stesso (senza istruzioni personali, ma con il `CLAUDE.md` della repo se c'è). Su un Mac con Claude Code installato: copiare `claude-utente.md` in `~/.claude/CLAUDE.md`.
+
+`claude-utente.md` e i `CLAUDE.md` delle repo dicono le stesse cose: se si cambia una regola, cambiarla in tutti.
