@@ -126,6 +126,10 @@ Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segre
 - **I cookie non distinguono le porte**: due app sullo stesso host (`vito:8081` e `vito:8087`) vedono gli stessi cookie. Se due app usano un cookie con lo stesso nome, entrare in una fa uscire dall'altra: per questo Minigiochi usa il cookie `minigiochi` e la homepage `giochi`.
 - Un `curl` lanciato subito dopo `docker compose up` può dare "Connection reset by peer": nginx non è ancora pronto. Basta riprovare dopo qualche secondo.
 - L'avviso nginx `duplicate MIME type "text/html"` è innocuo (l'HTML è già compresso di default).
+- **Termius può infilare codici invisibili nei file** (`\x1b]133;C`, i suoi segni di inizio comando) quando un comando scrive con `{ echo ...; } >> file`. Con un `.env` così `docker compose` dà `unexpected character "\x1b"`. Meglio scrivere con `printf ... > file` e pulire con `sed -i 's/\x1b\][^\x07]*\x07//g' file`; controllo: `cut -d= -f1 .env | cat -A`.
+- **Una auth key aggiunta al `.env` vale solo ricreando il container** (`docker compose up -d --force-recreate <servizio>`): con un semplice riavvio il container di Tailscale resta "Logged out" e propone un link di login che cambia a ogni riavvio.
+- **I giochi nel browser (onlineEmu) su iPhone vanno aperti in HTTPS**: da `http://192.168.1.22:8088` il GBA andava a circa 25 fps con l'audio distorto, da `https://retro.<tailnet>.ts.net` va fluido (in http Safari disattiva alcune funzioni usate dall'emulatore).
+- Una repo nuova creata privata non si clona sul Pi senza credenziali: renderla pubblica (Settings > Danger Zone > Change visibility), come le altre.
 
 ## Da fare
 
@@ -147,7 +151,9 @@ Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segre
 - [x] Aggiunte Chess (porta 8085) e Minigiochi (porta 8087, firewall verificato, link `/m/` provato da rete mobile).
 - [x] Indirizzi HTTPS senza porta per tutte le app (repo `ingressi-https`), provati dal telefono.
 - [ ] Disable key expiry su `sillabe`, `parole`, `minigiochi`, `chess`, `meteo` nel pannello Tailscale, e revocare la auth key riutilizzabile usata per crearli.
-- [ ] Installare onlineEmu sul Pi (README della repo), dispositivo `retro` in `ingressi-https` (auth key, Disable key expiry) e primo gioco GBA.
+- [x] onlineEmu installata sul Pi, dispositivo `retro` attivo (`https://retro.<tailnet>.ts.net`), primo gioco GBA provato da iPhone in HTTPS: fluido.
+- [ ] onlineEmu: verificare Disable key expiry su `retro`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`.
+- [ ] onlineEmu (facoltativo): chiudere la porta 8088 alla LAN (`127.0.0.1:8088`) per lasciarla solo via Tailscale.
 - [ ] onlineEmu: estrarre il BIOS della PS1 e aggiungere la PS1.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8089).
 
