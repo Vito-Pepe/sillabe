@@ -202,8 +202,8 @@ Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riq
 - [ ] ImpastiPLUS: confrontare 3-4 casi con PizzApp vera (stessi campi) per conferma; provare la foto da iPhone.
 - [ ] Impasti (facoltativo): tarare la curva di Impasti sui risultati del modello PizzApp.
 - [ ] Impasti (più avanti): promemoria delle fasi della timeline.
-- [ ] Infernotuffatori: installare sul Pi (prima l'ingresso di `ingressi-https`, poi l'app), Disable key expiry su `infernotuffatori`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`.
-- [ ] Infernotuffatori: condividere il dispositivo `infernotuffatori` con l'amico (Machines → Share) e verificare che le sue build portino il suo nome.
+- [x] Infernotuffatori installata sul Pi e provata ("funziona"): ingresso con rete sua, Disable key expiry su `infernotuffatori`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`. Dispositivo condiviso con l'amico.
+- [ ] Infernotuffatori: controllare che le build dell'amico portino il suo nome (identità dal dispositivo condiviso).
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8092).
 
 ## Per riprendere con Claude
