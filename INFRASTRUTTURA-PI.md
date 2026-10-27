@@ -45,7 +45,7 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8087 | 0.0.0.0 | Minigiochi (nginx) | |
 | 8088 | 0.0.0.0 | onlineEmu (RomM, giochi retro) | |
 | 8089 | 0.0.0.0 | Impostore (nginx) | |
-| 8090 | 0.0.0.0 | Impasti, repo `pizzapp` (Node) | |
+| 8090 | 0.0.0.0 | Impasti e ImpastiPLUS, repo `pizzapp` (Node) | |
 | 8765 | 127.0.0.1 | Meteo | app aggiunta fuori da queste sessioni (cartella `~/parole/meteo`) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
@@ -70,7 +70,7 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 | Minigiochi | `minigiochi` | `~/minigiochi` | `minigiochi` | `:8087` | `https://minigiochi.<tailnet>.ts.net` |
 | onlineEmu (giochi retro, RomM) | `onlineEmu` | `~/onlineEmu` | `onlineemu` | `:8088` | `https://retro.<tailnet>.ts.net` |
 | Impostore (gioco) | `impostore` | `~/impostore` | `impostore` | `:8089` | `https://impostore.<tailnet>.ts.net` |
-| Impasti (calcolatore e diario degli impasti) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
+| Impasti e ImpastiPLUS (impasti per la pizza, pagina di scelta in `/`) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
 | Meteo | ? (non gestita qui) | `~/parole/meteo` | ? | – | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 
@@ -157,7 +157,7 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | `onlineemu_db-data` | database di RomM (onlineEmu): libreria, utenti, salvataggi registrati |
 | `onlineemu_cache` | cache di RomM, si può ricreare |
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
-| `pizzapp_dati` | ricette, farine, lievito madre e impostazioni di Impasti (`impasti.json`), con una copia al giorno in `backup/` (ultime 14) |
+| `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
 | `ingressi-https_<app>-state` (8) | identità dei dispositivi Tailscale per app |
 | volumi di Chess e Meteo | non gestiti qui |
 
