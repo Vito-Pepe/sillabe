@@ -106,7 +106,7 @@ Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segre
 
 ### Impostore (gioco)
 
-Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:8089`, riquadro **Impostore** nella homepage. Il gioco dell'impostore con un telefono solo: si scrivono i nomi, il telefono passa di mano in mano, tutti leggono la parola segreta (con la categoria) tranne l'impostore, che vede in rosso "Sei l'impostore" e solo un indizio, senza categoria (insieme all'indizio a volte svelava la parola); poi giro di parole, voto e rivelazione. Pagina statica (nginx, container in sola lettura): tutto gira nel browser, niente dati sul Pi, niente cookie. Parole e indizi in `app/parole-impostore.js` (una riga per parola, si modificano anche da GitHub).
+Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:8089`, riquadro **Impostore** nella homepage. Il gioco dell'impostore con un telefono solo: si scrivono i nomi, il telefono passa di mano in mano, tutti leggono la parola segreta (con la categoria) tranne l'impostore, che vede in rosso "Sei l'impostore" e un indizio; la categoria gli si mostra solo con l'interruttore "Categoria per l'impostore" (spento di base: insieme all'indizio a volte svela la parola); poi giro di parole, voto e rivelazione. Pagina statica (nginx, container in sola lettura): tutto gira nel browser, niente dati sul Pi, niente cookie. Parole e indizi in `app/parole-impostore.js` (una riga per parola, si modificano anche da GitHub).
 
 ## Aggiungere una nuova app
 
