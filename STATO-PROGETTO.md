@@ -139,6 +139,13 @@ Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riq
 - Chi entra è riconosciuto da `tailscale serve` (intestazioni `Tailscale-User-*`): niente password, ognuno modifica solo le sue build; gli amministratori (`AMMINISTRATORI` nel `.env`) tutte.
 - Per questo la porta è solo su `127.0.0.1`, e l'ingresso di `ingressi-https` ha una rete sua invece di quella del Pi (vedi "Cose imparate").
 
+**Wiki** (voce del menu): tutte le informazioni del gioco, con una ricerca.
+- Nemici con l'anatomia completa, gli attacchi, i consigli e le armi migliori contro ognuno.
+- Armi e stratagemmi con il grado vero di perforazione, anche quelli che il gioco non mostra, e come vanno contro ogni nemico.
+- Tutte le armature con protezione e danno subito per parte del corpo; elmi e mantelli.
+- Una guida in italiano alle meccaniche (perforazione e corazza, danno durevole, esplosioni, effetti, stordimento, armatura, difficoltà), con tabelle fatte dai dati.
+- I testi delle pagine restano in inglese come sulla wiki e si aggiornano con il catalogo; le armature arrivano dalle tabelle Cargo della wiki.
+
 **Dati**: server Node senza dipendenze, dati nel volume `infernotuffatori_dati` con un backup al giorno.
 
 ## Aggiungere una nuova app
