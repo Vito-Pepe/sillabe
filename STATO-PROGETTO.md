@@ -20,11 +20,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Minigiochi (link pubblici) | `Vito-Pepe/minigiochi` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/m/<codice>` | 127.0.0.1:8086 |
 | onlineEmu (giochi retro) | `Vito-Pepe/onlineEmu` | `http://192.168.1.22:8088` | `https://retro.<tailnet>.ts.net` | 8088 |
 | Impostore (gioco) | `Vito-Pepe/impostore` | `http://192.168.1.22:8089` | `https://impostore.<tailnet>.ts.net` | 8089 |
+| Impasti (impasti per la pizza) | `Vito-Pepe/pizzapp` | `http://192.168.1.22:8090` | `https://pizzapp.<tailnet>.ts.net` | 8090 |
 | Meteo | (aggiunta fuori da queste sessioni, cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
-Porte occupate sul Pi: 8080–8089 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
+Porte occupate sul Pi: 8080–8090 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -108,10 +109,16 @@ Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segre
 
 Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:8089`, riquadro **Impostore** nella homepage. Il gioco dell'impostore con un telefono solo: si scrivono i nomi, il telefono passa di mano in mano, tutti leggono la parola segreta (con la categoria) tranne l'impostore, che vede in rosso "Sei l'impostore" e un indizio; la categoria gli si mostra solo con l'interruttore "Categoria per l'impostore" (spento di base: insieme all'indizio a volte svela la parola); poi giro di parole, voto e rivelazione. Pagina statica (nginx, container in sola lettura): tutto gira nel browser, niente dati sul Pi, niente cookie. Parole e indizi in `app/parole-impostore.js` (una riga per parola, si modificano anche da GitHub).
 
+### Impasti (repo pizzapp)
+
+Repo `pizzapp`, pagina `https://pizzapp.<tailnet>.ts.net` o `http://vito:8090`, riquadro **Impasti** nella homepage. Calcolatore e diario degli impasti per la pizza, ispirato alle funzioni dell'app Android "Pizzapp": codice, testi e grafica sono nostri. Stili Facile, Verace, Biga, Teglia e Personalizzata; dose di lievito da una curva in "ore a 20 °C" (il frigo conta circa un quinto), modificabile in Impostazioni; pianificazione dall'ora di cena; diario con cotture, voti e consigli; farine anche dal codice a barre (Open Food Facts, la fotocamera funziona solo in HTTPS); lievito madre; statistiche; condivisione come immagine; esporta/importa. Lasciati fuori: community, login, pubblicità e (per ora) i promemoria.
+
+Server Node senza dipendenze, dati in un file JSON nel volume `pizzapp_dati` con un backup al giorno. Niente password, come le altre app di casa.
+
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera: oggi 8080–8089 sono occupate, quindi dalla 8090 in su (verificare con `ss -ltn | grep ':80'`).
+2. Porta locale libera: oggi 8080–8090 sono occupate, quindi dalla 8091 in su (verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti.
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
@@ -163,7 +170,10 @@ Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:808
 - [ ] onlineEmu: estrarre il BIOS della PS1 e aggiungere la PS1.
 - [x] Impostore installata sul Pi (porta 8089, riga di cron presente), dispositivo `impostore` di `ingressi-https` avviato (`Startup complete`), riquadro nella homepage.
 - [ ] Impostore: verificare Disable key expiry su `impostore`, revoca delle due chiavi usate il 2026-10-27 (sono finite in chat) e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`. Provata dal telefono: funziona.
-- [ ] Scegliere la prossima app da aggiungere (dalla porta 8090).
+- [ ] Installare Impasti sul Pi (README della repo `pizzapp`), riga di cron, dispositivo `pizzapp` in `ingressi-https` (auth key, Disable key expiry, chiave revocata) e provarlo dalla homepage.
+- [ ] Impasti: tarare la curva del lievito confrontando 6-8 casi con le dosi di Pizzapp (stesse ore, temperature e panetti) e ritoccare i valori di partenza.
+- [ ] Impasti (più avanti): promemoria delle fasi della timeline.
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8091).
 
 ## Per riprendere con Claude
 

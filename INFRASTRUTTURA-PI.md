@@ -45,12 +45,13 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8087 | 0.0.0.0 | Minigiochi (nginx) | |
 | 8088 | 0.0.0.0 | onlineEmu (RomM, giochi retro) | |
 | 8089 | 0.0.0.0 | Impostore (nginx) | |
+| 8090 | 0.0.0.0 | Impasti, repo `pizzapp` (Node) | |
 | 8765 | 127.0.0.1 | Meteo | app aggiunta fuori da queste sessioni (cartella `~/parole/meteo`) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
 
-**Prima porta libera consigliata per un'app nuova: 8090**, poi 8091, ... Verificare sempre prima (sezione 9).
+**Prima porta libera consigliata per un'app nuova: 8091**, poi 8092, ... Verificare sempre prima (sezione 9).
 
 **Regola:** pubblica su `0.0.0.0` solo ciò che deve essere raggiungibile dalla LAN; ciò che serve solo a un proxy sul Pi (Tailscale, funnel) va su `127.0.0.1:<porta>`.
 
@@ -69,6 +70,7 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 | Minigiochi | `minigiochi` | `~/minigiochi` | `minigiochi` | `:8087` | `https://minigiochi.<tailnet>.ts.net` |
 | onlineEmu (giochi retro, RomM) | `onlineEmu` | `~/onlineEmu` | `onlineemu` | `:8088` | `https://retro.<tailnet>.ts.net` |
 | Impostore (gioco) | `impostore` | `~/impostore` | `impostore` | `:8089` | `https://impostore.<tailnet>.ts.net` |
+| Impasti (calcolatore e diario degli impasti) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
 | Meteo | ? (non gestita qui) | `~/parole/meteo` | ? | – | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 
@@ -86,7 +88,8 @@ chess-web-1, chess-stockfish-1
 minigiochi-minigiochi-1, minigiochi-giochi-1
 onlineemu-romm-1, onlineemu-db-1
 impostore-impostore-1
-ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore}-1
+pizzapp-pizzapp-1
+ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp}-1
 ```
 
 ---
@@ -99,7 +102,7 @@ ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore}-1
 |---|---|---|
 | `vito` | il Pi (Tailscale sull'host) | `tailscale serve` **solo** `443 -> http://127.0.0.1:8081` (homepage). Niente funnel |
 | `parole-esercizi` | container `parole-tailscale-public-1` (repo parole) | **funnel su Internet**, vedi sotto |
-| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore` | container di `ingressi-https` | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>` |
+| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp` | container di `ingressi-https` | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>` |
 
 Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso Tailscale aggiunge un numero (`parole-1`), da evitare.
 
@@ -137,7 +140,7 @@ Le app con una parte pubblica stanno su reti con **bridge dal nome fisso**, isol
 | `br-giochi` | `giochi-net` | homepage | `giochi-firewall.sh` | `giochi-firewall.service` |
 | `br-minigiochi` | `giochi-net` | minigiochi | `minigiochi-firewall.sh` | `minigiochi-firewall.service` |
 
-Gli altri progetti (sillabe, chess, onlineemu, impostore) usano la rete predefinita del loro progetto. Le sottoreti le assegna Docker in automatico (`172.x`): **non fissare sottoreti a mano**, si rischia di scontrarsi con quelle esistenti.
+Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Le sottoreti le assegna Docker in automatico (`172.x`): **non fissare sottoreti a mano**, si rischia di scontrarsi con quelle esistenti.
 
 Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewall/`, con un bridge nuovo (nome di **massimo 15 caratteri**, non in tabella) e script e servizio con nomi nuovi. Verifica: `docker compose exec <servizio> wget -q -T 3 -O /dev/null http://192.168.1.1 && echo RAGGIUNTO || echo BLOCCATO` deve dire `BLOCCATO`. Le regole valgono per nome di bridge: per servizi su `network_mode: host` (container Tailscale) non si applicano.
 
@@ -154,7 +157,8 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | `onlineemu_db-data` | database di RomM (onlineEmu): libreria, utenti, salvataggi registrati |
 | `onlineemu_cache` | cache di RomM, si può ricreare |
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
-| `ingressi-https_<app>-state` (7) | identità dei dispositivi Tailscale per app |
+| `pizzapp_dati` | ricette, farine, lievito madre e impostazioni di Impasti (`impasti.json`), con una copia al giorno in `backup/` (ultime 14) |
+| `ingressi-https_<app>-state` (8) | identità dei dispositivi Tailscale per app |
 | volumi di Chess e Meteo | non gestiti qui |
 
 Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update.sh` fanno solo `docker image prune -f` (immagini, non volumi).
@@ -177,6 +181,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   */5 * * * * cd /home/pepe/ingressi-https && ./update.sh >> /home/pepe/ingressi-https/update.log 2>&1
   */5 * * * * cd /home/pepe/onlineEmu && ./update.sh >> /home/pepe/onlineEmu/update.log 2>&1
   */5 * * * * cd /home/pepe/impostore && ./update.sh >> /home/pepe/impostore/update.log 2>&1
+  */5 * * * * cd /home/pepe/pizzapp && ./update.sh >> /home/pepe/pizzapp/update.log 2>&1
   45 4 * * 1 cd /home/pepe/ingressi-https && docker compose pull -q && docker compose up -d >> /home/pepe/ingressi-https/update.log 2>&1
   ```
 
@@ -190,7 +195,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 ## 8. Checklist per un progetto nuovo
 
 1. **Nome**: repo, cartella sul Pi e progetto compose con un nome nuovo (non in sezione 3).
-2. **Porta**: la prima libera da 8090 in su, dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
+2. **Porta**: la prima libera da 8091 in su, dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
 3. **Immagini**: multi-arch o arm64 (es. `nginx:alpine`, `node:22-alpine`).
 4. **Sicurezza** (come le altre app): `read_only: true` dove possibile, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `restart: unless-stopped`. Se ha una parte pubblica: bridge con nome fisso e firewall come in sezione 5.
 5. **Cookie**: i cookie del browser **non distinguono le porte**, quindi le app su `vito:<porta>` condividono i cookie. Nomi già usati: `s` (Parole, Path `/`), `giochi` (homepage, Path `/giochi/`), `minigiochi` (Minigiochi, Path `/api/`), `romm_session` e `romm_csrftoken` (onlineEmu, Path `/`). Usare un nome nuovo e specifico (es. `nomeapp_sess`).
@@ -240,7 +245,7 @@ Note:
 
 Due livelli, perché nessuna sessione parta senza saperlo:
 
-1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
+1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
 2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Le istruzioni stanno in **`claude-utente.md`** (questa repo); lo script le scarica a ogni nuova sessione e le mette tra le impostazioni personali di Claude Code (`~/.claude/CLAUDE.md`), così una modifica a `claude-utente.md` vale da sola per le sessioni successive. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questa riga; se si usano più ambienti, va messa in ognuno:
 
 ```bash
