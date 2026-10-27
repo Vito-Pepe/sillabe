@@ -135,6 +135,7 @@ Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:808
 - **Una auth key aggiunta al `.env` vale solo ricreando il container** (`docker compose up -d --force-recreate <servizio>`): con un semplice riavvio il container di Tailscale resta "Logged out" e propone un link di login che cambia a ogni riavvio.
 - **I giochi nel browser (onlineEmu) su iPhone vanno aperti in HTTPS**: da `http://192.168.1.22:8088` il GBA andava a circa 25 fps con l'audio distorto, da `https://retro.<tailnet>.ts.net` va fluido (in http Safari disattiva alcune funzioni usate dall'emulatore).
 - Una repo nuova creata privata non si clona sul Pi senza credenziali: renderla pubblica (Settings > Danger Zone > Change visibility), come le altre.
+- **Nel comando `read -rsp "Incolla la auth key: " K ...` la frase tra virgolette va lasciata com'è**: è il testo che il terminale mostra. La chiave si incolla dopo, quando compare la richiesta (non si vede niente mentre la si incolla). Il 2026-10-27 la chiave era stata scritta al posto della frase: è comparsa sullo schermo e `read` ha preso come valore la riga incollata dopo, finita nel `.env`. Per questo il comando con `read` va dato da solo, in un blocco separato. Una chiave finita sullo schermo o in chat va revocata e sostituita.
 
 ## Da fare
 
@@ -160,7 +161,8 @@ Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:808
 - [ ] onlineEmu: verificare Disable key expiry su `retro`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`.
 - [ ] onlineEmu (facoltativo): chiudere la porta 8088 alla LAN (`127.0.0.1:8088`) per lasciarla solo via Tailscale.
 - [ ] onlineEmu: estrarre il BIOS della PS1 e aggiungere la PS1.
-- [ ] Installare Impostore sul Pi (README della repo), riga di cron, dispositivo `impostore` in `ingressi-https` (auth key, Disable key expiry, chiave revocata) e provarlo dalla homepage.
+- [x] Impostore installata sul Pi (porta 8089, riga di cron presente), dispositivo `impostore` di `ingressi-https` avviato (`Startup complete`), riquadro nella homepage.
+- [ ] Impostore: verificare Disable key expiry su `impostore`, revoca delle due chiavi usate il 2026-10-27 (sono finite in chat) e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`; provare `https://impostore.<tailnet>.ts.net` dal telefono.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8090).
 
 ## Per riprendere con Claude
