@@ -106,7 +106,7 @@ Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segre
 
 ### Impostore (gioco)
 
-Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:8089`, riquadro **Impostore** nella homepage. Il gioco dell'impostore con un telefono solo: si scrivono i nomi, il telefono passa di mano in mano, tutti leggono la parola segreta tranne l'impostore, che vede solo la categoria e un indizio; poi giro di parole, voto e rivelazione. Pagina statica (nginx, container in sola lettura): tutto gira nel browser, niente dati sul Pi, niente cookie. Parole e indizi in `app/parole-impostore.js` (una riga per parola, si modificano anche da GitHub).
+Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:8089`, riquadro **Impostore** nella homepage. Il gioco dell'impostore con un telefono solo: si scrivono i nomi, il telefono passa di mano in mano, tutti leggono la parola segreta (con la categoria) tranne l'impostore, che vede in rosso "Sei l'impostore" e solo un indizio, senza categoria (insieme all'indizio a volte svelava la parola); poi giro di parole, voto e rivelazione. Pagina statica (nginx, container in sola lettura): tutto gira nel browser, niente dati sul Pi, niente cookie. Parole e indizi in `app/parole-impostore.js` (una riga per parola, si modificano anche da GitHub).
 
 ## Aggiungere una nuova app
 
@@ -162,7 +162,7 @@ Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:808
 - [ ] onlineEmu (facoltativo): chiudere la porta 8088 alla LAN (`127.0.0.1:8088`) per lasciarla solo via Tailscale.
 - [ ] onlineEmu: estrarre il BIOS della PS1 e aggiungere la PS1.
 - [x] Impostore installata sul Pi (porta 8089, riga di cron presente), dispositivo `impostore` di `ingressi-https` avviato (`Startup complete`), riquadro nella homepage.
-- [ ] Impostore: verificare Disable key expiry su `impostore`, revoca delle due chiavi usate il 2026-10-27 (sono finite in chat) e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`; provare `https://impostore.<tailnet>.ts.net` dal telefono.
+- [ ] Impostore: verificare Disable key expiry su `impostore`, revoca delle due chiavi usate il 2026-10-27 (sono finite in chat) e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`. Provata dal telefono: funziona.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8090).
 
 ## Per riprendere con Claude
