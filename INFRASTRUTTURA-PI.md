@@ -46,12 +46,13 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8088 | 0.0.0.0 | onlineEmu (RomM, giochi retro) | |
 | 8089 | 0.0.0.0 | Impostore (nginx) | |
 | 8090 | 0.0.0.0 | Impasti e ImpastiPLUS, repo `pizzapp` (Node) | |
+| 8091 | 127.0.0.1 | Infernotuffatori (Node) | solo per le prove dal Pi: l'ingresso HTTPS arriva all'app dalla rete Docker `ingresso-infernotuffatori` (sezione 5) |
 | 8765 | 127.0.0.1 | Meteo | app aggiunta fuori da queste sessioni (cartella `~/parole/meteo`) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
 
-**Prima porta libera consigliata per un'app nuova: 8091**, poi 8092, ... Verificare sempre prima (sezione 9).
+**Prima porta libera consigliata per un'app nuova: 8092**, poi 8093, ... Verificare sempre prima (sezione 9).
 
 **Regola:** pubblica su `0.0.0.0` solo ciò che deve essere raggiungibile dalla LAN; ciò che serve solo a un proxy sul Pi (Tailscale, funnel) va su `127.0.0.1:<porta>`.
 
@@ -71,6 +72,7 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 | onlineEmu (giochi retro, RomM) | `onlineEmu` | `~/onlineEmu` | `onlineemu` | `:8088` | `https://retro.<tailnet>.ts.net` |
 | Impostore (gioco) | `impostore` | `~/impostore` | `impostore` | `:8089` | `https://impostore.<tailnet>.ts.net` |
 | Impasti e ImpastiPLUS (impasti per la pizza, pagina di scelta in `/`) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
+| Infernotuffatori (build di Helldivers 2, **condivisa con un amico**) | `infernotuffatori` | `~/infernotuffatori` | `infernotuffatori` | – (solo `127.0.0.1`) | `https://infernotuffatori.<tailnet>.ts.net` |
 | Meteo | ? (non gestita qui) | `~/parole/meteo` | ? | – | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 
@@ -89,7 +91,8 @@ minigiochi-minigiochi-1, minigiochi-giochi-1
 onlineemu-romm-1, onlineemu-db-1
 impostore-impostore-1
 pizzapp-pizzapp-1
-ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp}-1
+infernotuffatori-infernotuffatori-1
+ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,infernotuffatori}-1
 ```
 
 ---
@@ -102,7 +105,8 @@ ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp}-1
 |---|---|---|
 | `vito` | il Pi (Tailscale sull'host) | `tailscale serve` **solo** `443 -> http://127.0.0.1:8081` (homepage). Niente funnel |
 | `parole-esercizi` | container `parole-tailscale-public-1` (repo parole) | **funnel su Internet**, vedi sotto |
-| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp` | container di `ingressi-https` | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>` |
+| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>` |
+| `infernotuffatori` | container di `ingressi-https` con **rete sua** (`ingresso-infernotuffatori`, niente `network_mode: host`) | **condiviso con un amico** (Machines → Share); `443 -> http://infernotuffatori-app:3000`. L'app riconosce chi entra dalle intestazioni `Tailscale-User-*` di `tailscale serve` |
 
 Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso Tailscale aggiunge un numero (`parole-1`), da evitare.
 
@@ -111,6 +115,7 @@ Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso 
 - **Non lanciare `tailscale serve` sull'host per una nuova app.** Un `tailscale serve --https=<porta>` su una porta già usata **sostituisce** la regola esistente: è già successo che la homepage sparisse dalla 443. Il modo giusto per dare a un'app un indirizzo HTTPS senza porta è la repo `ingressi-https` (sezione 8).
 - Le vecchie regole `8443` (Meteo) e `10000` (Sillabe) sull'host sono state sostituite da `ingressi-https` e vanno spente o sono già spente: `tailscale serve status` deve mostrare solo la 443.
 - I container Tailscale girano in **modalità utente** (`TS_USERSPACE=true`) con `network_mode: host` e `TS_TAILSCALED_EXTRA_ARGS=--port=0`, per non scontrarsi con il Tailscale dell'host. Identità nel volume: la auth key serve solo al primo avvio, poi si toglie dal `.env` e si revoca. Su ogni nuovo dispositivo: **Disable key expiry** nel pannello.
+- **Mai condividere (Machines → Share) un dispositivo in `network_mode: host`.** In modalità utente Tailscale gira ogni connessione all'IP del dispositivo, su una porta che `serve` non gestisce, a `127.0.0.1:<stessa porta>` (`wgengine/netstack` di Tailscale), e con `network_mode: host` quel `127.0.0.1` è il Pi. Da ognuno di quei dispositivi si arriva quindi a **tutte** le porte del Pi: SSH, ogni app, anche quelle solo su `127.0.0.1` (e Parole ha il login disattivato). Per i propri dispositivi non cambia niente; per chi riceve una condivisione sì. Un dispositivo da condividere ha una rete Docker sua insieme solo all'app, come `infernotuffatori` (README di `ingressi-https`, sezione "Dispositivi da condividere").
 - **HSTS vietato** su questi nomi: un header `Strict-Transport-Security` vale per tutto il nome host, porte comprese, e rompe le app in http. Il lato pubblico di Parole manda `max-age=0` apposta.
 - iPhone con **Relay privato di iCloud**: può non risolvere i nomi `*.ts.net`. Riserva: `http://vito:<porta>`.
 
@@ -140,7 +145,13 @@ Le app con una parte pubblica stanno su reti con **bridge dal nome fisso**, isol
 | `br-giochi` | `giochi-net` | homepage | `giochi-firewall.sh` | `giochi-firewall.service` |
 | `br-minigiochi` | `giochi-net` | minigiochi | `minigiochi-firewall.sh` | `minigiochi-firewall.service` |
 
-Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Le sottoreti le assegna Docker in automatico (`172.x`): **non fissare sottoreti a mano**, si rischia di scontrarsi con quelle esistenti.
+Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi (`raw.githubusercontent.com`); non riceve niente da Internet.
+
+| Rete | Chi la crea | Chi la usa | A cosa serve |
+|---|---|---|---|
+| `ingresso-infernotuffatori` | `ingressi-https` (servizio `infernotuffatori`, nome fisso, bridge e sottorete automatici) | `infernotuffatori` (`external: true`, alias `infernotuffatori-app`) | l'ingresso HTTPS condiviso con l'amico arriva all'app senza usare la rete del Pi (sezione 4). Va creata prima di avviare l'app |
+
+Le sottoreti le assegna Docker in automatico (`172.x`): **non fissare sottoreti a mano**, si rischia di scontrarsi con quelle esistenti.
 
 Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewall/`, con un bridge nuovo (nome di **massimo 15 caratteri**, non in tabella) e script e servizio con nomi nuovi. Verifica: `docker compose exec <servizio> wget -q -T 3 -O /dev/null http://192.168.1.1 && echo RAGGIUNTO || echo BLOCCATO` deve dire `BLOCCATO`. Le regole valgono per nome di bridge: per servizi su `network_mode: host` (container Tailscale) non si applicano.
 
@@ -158,7 +169,8 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | `onlineemu_cache` | cache di RomM, si può ricreare |
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
-| `ingressi-https_<app>-state` (8) | identità dei dispositivi Tailscale per app |
+| `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14) e catalogo aggiornato dalla wiki con le icone (`catalogo/`) |
+| `ingressi-https_<app>-state` (9) | identità dei dispositivi Tailscale per app |
 | volumi di Chess e Meteo | non gestiti qui |
 
 Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update.sh` fanno solo `docker image prune -f` (immagini, non volumi).
@@ -182,6 +194,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   */5 * * * * cd /home/pepe/onlineEmu && ./update.sh >> /home/pepe/onlineEmu/update.log 2>&1
   */5 * * * * cd /home/pepe/impostore && ./update.sh >> /home/pepe/impostore/update.log 2>&1
   */5 * * * * cd /home/pepe/pizzapp && ./update.sh >> /home/pepe/pizzapp/update.log 2>&1
+  */5 * * * * cd /home/pepe/infernotuffatori && ./update.sh >> /home/pepe/infernotuffatori/update.log 2>&1
   45 4 * * 1 cd /home/pepe/ingressi-https && docker compose pull -q && docker compose up -d >> /home/pepe/ingressi-https/update.log 2>&1
   ```
 
@@ -195,13 +208,13 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 ## 8. Checklist per un progetto nuovo
 
 1. **Nome**: repo, cartella sul Pi e progetto compose con un nome nuovo (non in sezione 3).
-2. **Porta**: la prima libera da 8091 in su, dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
+2. **Porta**: la prima libera da 8092 in su, dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
 3. **Immagini**: multi-arch o arm64 (es. `nginx:alpine`, `node:22-alpine`).
 4. **Sicurezza** (come le altre app): `read_only: true` dove possibile, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `restart: unless-stopped`. Se ha una parte pubblica: bridge con nome fisso e firewall come in sezione 5.
 5. **Cookie**: i cookie del browser **non distinguono le porte**, quindi le app su `vito:<porta>` condividono i cookie. Nomi già usati: `s` (Parole, Path `/`), `giochi` (homepage, Path `/giochi/`), `minigiochi` (Minigiochi, Path `/api/`), `romm_session` e `romm_csrftoken` (onlineEmu, Path `/`). Usare un nome nuovo e specifico (es. `nomeapp_sess`).
 6. **File statici**: dare nomi propri a CSS e JS (es. `nomeapp.css`), non `style.css` o `app.js`: Sillabe mette in cache CSS e JS per un giorno, e app sullo stesso nome host possono prendersi lo stile a vicenda.
 7. **`update.sh`**: copiarlo da `homepage` o `minigiochi`, e aggiungere la riga di cron (sezione 7).
-8. **HTTPS senza porta**: nella repo `ingressi-https` aggiungere `serve/<nome>.json` (copiandone uno e cambiando la porta) e un servizio nel compose con `TS_HOSTNAME: <nome>` e il suo volume. Al primo avvio serve una auth key (Reusable o monouso, non Ephemeral), poi Disable key expiry e revoca della chiave. **Mai** `tailscale serve` sull'host.
+8. **HTTPS senza porta**: nella repo `ingressi-https` aggiungere `serve/<nome>.json` (copiandone uno e cambiando la porta) e un servizio nel compose con `TS_HOSTNAME: <nome>` e il suo volume. Al primo avvio serve una auth key (Reusable o monouso, non Ephemeral), poi Disable key expiry e revoca della chiave. **Mai** `tailscale serve` sull'host. Se il dispositivo andrà condiviso con qualcuno fuori dalla tailnet: rete sua, non `network_mode: host` (sezione 4).
 9. **Homepage**: una riga in `homepage/app/apps.js` con `lanPort` e `tsHost: "<nome>"`.
 10. **Parte pubblica** (se serve): prefisso nuovo in `parole/tailscale/serve.json` verso `127.0.0.1:<porta>`, poi ricreare `tailscale-public` (sezione 4).
 11. **`CLAUDE.md`** nella repo nuova, copiato da una delle repo esistenti (sezione 11).
@@ -245,7 +258,7 @@ Note:
 
 Due livelli, perché nessuna sessione parta senza saperlo:
 
-1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
+1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
 2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Le istruzioni stanno in **`claude-utente.md`** (questa repo); lo script le scarica a ogni nuova sessione e le mette tra le impostazioni personali di Claude Code (`~/.claude/CLAUDE.md`), così una modifica a `claude-utente.md` vale da sola per le sessioni successive. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questa riga; se si usano più ambienti, va messa in ognuno:
 
 ```bash

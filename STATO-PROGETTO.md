@@ -21,11 +21,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | onlineEmu (giochi retro) | `Vito-Pepe/onlineEmu` | `http://192.168.1.22:8088` | `https://retro.<tailnet>.ts.net` | 8088 |
 | Impostore (gioco) | `Vito-Pepe/impostore` | `http://192.168.1.22:8089` | `https://impostore.<tailnet>.ts.net` | 8089 |
 | Impasti e ImpastiPLUS (impasti per la pizza) | `Vito-Pepe/pizzapp` | `http://192.168.1.22:8090` | `https://pizzapp.<tailnet>.ts.net` | 8090 |
+| Infernotuffatori (build di Helldivers 2) | `Vito-Pepe/infernotuffatori` | – | `https://infernotuffatori.<tailnet>.ts.net`, anche per un amico (dispositivo condiviso) | 127.0.0.1:8091 |
 | Meteo | (aggiunta fuori da queste sessioni, cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
-Porte occupate sul Pi: 8080–8090 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
+Porte occupate sul Pi: 8080–8091 (8084, 8086 e 8091 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -119,12 +120,33 @@ Repo `pizzapp`, pagina `https://pizzapp.<tailnet>.ts.net` o `http://vito:8090`, 
 
 Server Node senza dipendenze, dati in un file JSON nel volume `pizzapp_dati` con un backup al giorno, foto di ImpastiPLUS nella cartella `foto/` dello stesso volume. Niente password, come le altre app di casa.
 
+### Infernotuffatori (build di Helldivers 2)
+
+Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riquadro **Infernotuffatori** nella homepage (solo con la homepage in https: in LAN non c'è). Fa la parte "costruisci e consulta le build" del builder di democracy-hub.net:
+- elenco delle build di tutti, per fazione, con riordino trascinando;
+- costruttore con la scelta ordinata per efficacia;
+- pagina della build con l'analisi: prestazioni, potenza, soglie, distanza, profilo, strutture;
+- importazione dei link di condivisione di democracy-hub;
+- pagina Novità.
+
+**Catalogo e metriche**:
+- Il catalogo (armi, stratagemmi, passive, potenziamenti, nemici, strutture) viene dalla wiki di Helldivers 2 (helldivers.wiki.gg, CC BY-NC-SA 4.0).
+- Il server lo **aggiorna da solo una volta al giorno**, oppure a mano con "Aggiorna adesso". Le modifiche (armi nuove, danni cambiati) finiscono in Novità; se la wiki non risponde resta il catalogo di prima.
+- Le metriche sono **nostre**, calcolate dai dati del gioco (`app/comune/metriche.js`): dei punteggi di democracy-hub non si usa niente.
+
+**Chi può fare cosa**:
+- Si condivide con un **amico** dandogli solo il dispositivo `infernotuffatori` (Machines → Share), non la tailnet.
+- Chi entra è riconosciuto da `tailscale serve` (intestazioni `Tailscale-User-*`): niente password, ognuno modifica solo le sue build; gli amministratori (`AMMINISTRATORI` nel `.env`) tutte.
+- Per questo la porta è solo su `127.0.0.1`, e l'ingresso di `ingressi-https` ha una rete sua invece di quella del Pi (vedi "Cose imparate").
+
+**Dati**: server Node senza dipendenze, dati nel volume `infernotuffatori_dati` con un backup al giorno.
+
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera: oggi 8080–8090 sono occupate, quindi dalla 8091 in su (verificare con `ss -ltn | grep ':80'`).
+2. Porta locale libera: oggi 8080–8091 sono occupate, quindi dalla 8092 in su (verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
-4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti.
+4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti. Un dispositivo da condividere con persone fuori dalla tailnet va su una rete sua, non su quella del Pi (come `infernotuffatori`).
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
 
 ## Cose imparate
@@ -147,6 +169,7 @@ Server Node senza dipendenze, dati in un file JSON nel volume `pizzapp_dati` con
 - **I giochi nel browser (onlineEmu) su iPhone vanno aperti in HTTPS**: da `http://192.168.1.22:8088` il GBA andava a circa 25 fps con l'audio distorto, da `https://retro.<tailnet>.ts.net` va fluido (in http Safari disattiva alcune funzioni usate dall'emulatore).
 - Una repo nuova creata privata non si clona sul Pi senza credenziali: renderla pubblica (Settings > Danger Zone > Change visibility), come le altre.
 - **Nel comando `read -rsp "Incolla la auth key: " K ...` la frase tra virgolette va lasciata com'è**: è il testo che il terminale mostra. La chiave si incolla dopo, quando compare la richiesta (non si vede niente mentre la si incolla). Il 2026-10-27 la chiave era stata scritta al posto della frase: è comparsa sullo schermo e `read` ha preso come valore la riga incollata dopo, finita nel `.env`. Per questo il comando con `read` va dato da solo, in un blocco separato. Una chiave finita sullo schermo o in chat va revocata e sostituita.
+- **I dispositivi di `ingressi-https` sulla rete del Pi (`network_mode: host`) non vanno mai condivisi con altri.** In modalità utente Tailscale gira ogni connessione all'IP del dispositivo, su una porta che `serve` non gestisce, al `127.0.0.1` della stessa porta: con la rete del Pi, da quel dispositivo si arriva a tutte le porte del Pi (SSH, tutte le app, anche quelle solo su `127.0.0.1`). Visto il 2026-10-27 nel codice di Tailscale (`wgengine/netstack`) preparando la condivisione di Infernotuffatori con un amico. Per questo `infernotuffatori` ha una rete Docker sua insieme solo all'app (`ingresso-infernotuffatori`): provato con Docker, dentro il container di Tailscale non c'è niente in ascolto oltre al DNS di Docker.
 
 ## Da fare
 
@@ -179,7 +202,9 @@ Server Node senza dipendenze, dati in un file JSON nel volume `pizzapp_dati` con
 - [ ] ImpastiPLUS: confrontare 3-4 casi con PizzApp vera (stessi campi) per conferma; provare la foto da iPhone.
 - [ ] Impasti (facoltativo): tarare la curva di Impasti sui risultati del modello PizzApp.
 - [ ] Impasti (più avanti): promemoria delle fasi della timeline.
-- [ ] Scegliere la prossima app da aggiungere (dalla porta 8091).
+- [ ] Infernotuffatori: installare sul Pi (prima l'ingresso di `ingressi-https`, poi l'app), Disable key expiry su `infernotuffatori`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`.
+- [ ] Infernotuffatori: condividere il dispositivo `infernotuffatori` con l'amico (Machines → Share) e verificare che le sue build portino il suo nome.
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8092).
 
 ## Per riprendere con Claude
 
