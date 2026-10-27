@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-10-25. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-10-27. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
@@ -19,11 +19,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Minigiochi | `Vito-Pepe/minigiochi` | `http://192.168.1.22:8087` | `https://minigiochi.<tailnet>.ts.net` | 8087 |
 | Minigiochi (link pubblici) | `Vito-Pepe/minigiochi` | – | **Internet**: `https://parole-esercizi.<tailnet>.ts.net/m/<codice>` | 127.0.0.1:8086 |
 | onlineEmu (giochi retro) | `Vito-Pepe/onlineEmu` | `http://192.168.1.22:8088` | `https://retro.<tailnet>.ts.net` | 8088 |
+| Impostore (gioco) | `Vito-Pepe/impostore` | `http://192.168.1.22:8089` | `https://impostore.<tailnet>.ts.net` | 8089 |
 | Meteo | (aggiunta fuori da queste sessioni, cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
-Porte occupate sul Pi: 8080–8088 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
+Porte occupate sul Pi: 8080–8089 (8084 e 8086 solo su `127.0.0.1`). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -103,10 +104,14 @@ Repo `onlineEmu`, pagina `http://vito:8088` o `https://retro.<tailnet>.ts.net`. 
 
 Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segreti generati sul Pi nel `.env`, giochi e salvataggi nella cartella `~/onlineEmu/dati/` (fuori da git). Account amministratore creato al primo accesso. Su iPhone: "Aggiungi alla schermata Home". Istruzioni nel README della repo.
 
+### Impostore (gioco)
+
+Repo `impostore`, pagina `https://impostore.<tailnet>.ts.net` o `http://vito:8089`, riquadro **Impostore** nella homepage. Il gioco dell'impostore con un telefono solo: si scrivono i nomi, il telefono passa di mano in mano, tutti leggono la parola segreta tranne l'impostore, che vede solo la categoria e un indizio; poi giro di parole, voto e rivelazione. Pagina statica (nginx, container in sola lettura): tutto gira nel browser, niente dati sul Pi, niente cookie. Parole e indizi in `app/parole-impostore.js` (una riga per parola, si modificano anche da GitHub).
+
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera: oggi 8080–8088 sono occupate, quindi dalla 8089 in su (verificare con `ss -ltn | grep ':80'`).
+2. Porta locale libera: oggi 8080–8089 sono occupate, quindi dalla 8090 in su (verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti.
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
@@ -155,7 +160,8 @@ Database MariaDB (container `onlineemu-db-1`, volume `onlineemu_db-data`), segre
 - [ ] onlineEmu: verificare Disable key expiry su `retro`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`.
 - [ ] onlineEmu (facoltativo): chiudere la porta 8088 alla LAN (`127.0.0.1:8088`) per lasciarla solo via Tailscale.
 - [ ] onlineEmu: estrarre il BIOS della PS1 e aggiungere la PS1.
-- [ ] Scegliere la prossima app da aggiungere (dalla porta 8089).
+- [ ] Installare Impostore sul Pi (README della repo), riga di cron, dispositivo `impostore` in `ingressi-https` (auth key, Disable key expiry, chiave revocata) e provarlo dalla homepage.
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8090).
 
 ## Per riprendere con Claude
 
