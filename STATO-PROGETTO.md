@@ -124,7 +124,8 @@ Server Node senza dipendenze, dati in un file JSON nel volume `pizzapp_dati` con
 
 Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riquadro **Infernotuffatori** nella homepage (solo con la homepage in https: in LAN non c'è). Fa la parte "costruisci e consulta le build" del builder di democracy-hub.net:
 - elenco delle build di tutti, per fazione, con riordino trascinando;
-- costruttore con la scelta ordinata per efficacia;
+- costruttore con la scelta ordinata per efficacia o per quanto alza il punteggio della build, e i **consigli** pezzo per pezzo ("Metti", "Completa i posti vuoti");
+- **build migliore** per ogni fazione: la potenza totale più alta tra le build che si possono portare (uno zaino, un'arma di supporto e un veicolo al massimo; passiva e peso di un'armatura vera), da cambiare e salvare;
 - pagina della build con l'analisi: prestazioni, potenza, soglie, distanza, profilo, strutture;
 - importazione dei link di condivisione di democracy-hub;
 - pagina Novità.
