@@ -145,7 +145,7 @@ Le app con una parte pubblica stanno su reti con **bridge dal nome fisso**, isol
 | `br-giochi` | `giochi-net` | homepage | `giochi-firewall.sh` | `giochi-firewall.service` |
 | `br-minigiochi` | `giochi-net` | minigiochi | `minigiochi-firewall.sh` | `minigiochi-firewall.service` |
 
-Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi (`raw.githubusercontent.com`); non riceve niente da Internet.
+Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet.
 
 | Rete | Chi la crea | Chi la usa | A cosa serve |
 |---|---|---|---|
@@ -169,7 +169,7 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | `onlineemu_cache` | cache di RomM, si può ricreare |
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
-| `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14) e catalogo aggiornato dalla wiki con le icone (`catalogo/`) |
+| `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14), catalogo aggiornato dalla wiki con le icone (`catalogo/`) e ordini di gioco con il loro storico (`ordini/`) |
 | `ingressi-https_<app>-state` (9) | identità dei dispositivi Tailscale per app |
 | volumi di Chess e Meteo | non gestiti qui |
 
