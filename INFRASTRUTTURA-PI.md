@@ -145,7 +145,7 @@ Le app con una parte pubblica stanno su reti con **bridge dal nome fisso**, isol
 | `br-giochi` | `giochi-net` | homepage | `giochi-firewall.sh` | `giochi-firewall.service` |
 | `br-minigiochi` | `giochi-net` | minigiochi | `minigiochi-firewall.sh` | `minigiochi-firewall.service` |
 
-Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per gli ordini di gioco: l'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account) e DiveHarder (`api.diveharder.com`, Personal Order); solo letture, non riceve niente da Internet.
+Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet.
 
 | Rete | Chi la crea | Chi la usa | A cosa serve |
 |---|---|---|---|
