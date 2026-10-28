@@ -146,6 +146,11 @@ Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riq
 - Una guida in italiano alle meccaniche (perforazione e corazza, danno durevole, esplosioni, effetti, stordimento, armatura, difficoltà), con tabelle fatte dai dati.
 - I testi delle pagine restano in inglese come sulla wiki e si aggiornano con il catalogo; le armature arrivano dalle tabelle Cargo della wiki.
 
+**Ordini** (voce del menu): il Major Order in corso e il Personal Order del giorno, aggiornati ogni 30 minuti.
+- Obiettivi in italiano con percentuale, numeri e quanto manca; pianeti coinvolti (chi li tiene, liberazione, difesa, Helldiver presenti); ricompensa e scadenza.
+- Ritmo delle ultime ore e stima se si finisce in tempo (storico nel volume, `ordini/`).
+- Fonti: l'API del gioco (senza account) e, per il Personal Order, DiveHarder (il gioco lo dà solo con l'account di un giocatore).
+
 **Dati**: server Node senza dipendenze, dati nel volume `infernotuffatori_dati` con un backup al giorno.
 
 ## Aggiungere una nuova app
