@@ -47,7 +47,7 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8089 | 0.0.0.0 | Impostore (nginx) | |
 | 8090 | 0.0.0.0 | Impasti e ImpastiPLUS, repo `pizzapp` (Node) | |
 | 8091 | 127.0.0.1 | Infernotuffatori (Node) | solo per le prove dal Pi: l'ingresso HTTPS arriva all'app dalla rete Docker `ingresso-infernotuffatori` (sezione 5) |
-| 8765 | 127.0.0.1 | Meteo | repo `meteo`, cartella `~/parole/meteo` |
+| 8765 | 0.0.0.0 | Meteo | repo `meteo`, cartella `~/parole/meteo` (aperta anche alla LAN: sezione 10) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
@@ -73,7 +73,7 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 | Impostore (gioco) | `impostore` | `~/impostore` | `impostore` | `:8089` | `https://impostore.<tailnet>.ts.net` |
 | Impasti e ImpastiPLUS (impasti per la pizza, pagina di scelta in `/`) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
 | Infernotuffatori (build di Helldivers 2, **condivisa con un amico**) | `infernotuffatori` | `~/infernotuffatori` | `infernotuffatori` | – (solo `127.0.0.1`) | `https://infernotuffatori.<tailnet>.ts.net` |
-| Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | – | `https://meteo.<tailnet>.ts.net` |
+| Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 
 `<tailnet>` è il nome della tailnet dell'utente (si legge con `tailscale status` o nel pannello Tailscale). Gli indirizzi `http://vito:<porta>` (nome breve) funzionano dalla tailnet come riserva.
@@ -251,7 +251,8 @@ Note:
 
 - Parole ha il login **disattivato** (`DISABLE_LOGIN=1` nel `~/parole/.env`), in via temporanea.
 - `vito` risulta ancora pubblicato nel DNS pubblico (residuo del vecchio funnel). Per toglierlo andrebbe ristretto il permesso funnel con un tag su `parole-esercizi` nelle regole del pannello Tailscale: rimandato dall'utente.
-- La cartella `~/parole/meteo` sta dentro la clone di Parole: non dà problemi (non entra nell'immagine, git la ignora), ma un progetto nuovo va messo in `~/<nome>`, non dentro un'altra repo.
+- La cartella `~/parole/meteo` sta dentro la clone di Parole: non dà problemi (non entra nell'immagine, git la ignora), ma un progetto nuovo va messo in `~/<nome>`, non dentro un'altra repo. Fino al 2026-10-30 seguiva il branch `claude/meteo-app` invece di `main`: va tenuta su `main`, come le altre.
+- Meteo pubblica la 8765 su tutte le interfacce (`0.0.0.0` e `[::]`), anche se la homepage lo apre solo dalla tailnet. Per chiuderla alla LAN basterebbe `"127.0.0.1:8765:8765"` nel suo `docker-compose.yml`: da decidere con l'utente.
 - Chess non è stato sviluppato in queste sessioni: per i dettagli guardare la sua repo o chiedere all'utente. Nemmeno Meteo, che dal 2026-10-30 ha però `CLAUDE.md` e `update.sh` come le altre app.
 
 ---
