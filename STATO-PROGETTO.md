@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-10-27. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-10-30. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
@@ -22,7 +22,7 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Impostore (gioco) | `Vito-Pepe/impostore` | `http://192.168.1.22:8089` | `https://impostore.<tailnet>.ts.net` | 8089 |
 | Impasti e ImpastiPLUS (impasti per la pizza) | `Vito-Pepe/pizzapp` | `http://192.168.1.22:8090` | `https://pizzapp.<tailnet>.ts.net` | 8090 |
 | Infernotuffatori (build di Helldivers 2) | `Vito-Pepe/infernotuffatori` | – | `https://infernotuffatori.<tailnet>.ts.net`, anche per un amico (dispositivo condiviso) | 127.0.0.1:8091 |
-| Meteo | (aggiunta fuori da queste sessioni, cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
+| Meteo | `Vito-Pepe/meteo` (cartella `~/parole/meteo`) | – | `https://meteo.<tailnet>.ts.net` | 127.0.0.1:8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
@@ -217,6 +217,7 @@ Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riq
 - [ ] Impasti (più avanti): promemoria delle fasi della timeline.
 - [x] Infernotuffatori installata sul Pi e provata ("funziona"): ingresso con rete sua, Disable key expiry su `infernotuffatori`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`. Dispositivo condiviso con l'amico.
 - [ ] Infernotuffatori: controllare che le build dell'amico portino il suo nome (identità dal dispositivo condiviso).
+- [ ] Meteo: `CLAUDE.md` e `update.sh` aggiunti alla repo (PR meteo #2). Sul Pi: `git pull` in `~/parole/meteo` e riga di cron.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8092).
 
 ## Per riprendere con Claude
