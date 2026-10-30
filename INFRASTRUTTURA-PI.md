@@ -1,6 +1,6 @@
 # Infrastruttura del Raspberry Pi: cosa è già occupato
 
-Ultimo aggiornamento: 2026-10-27.
+Ultimo aggiornamento: 2026-10-30.
 
 > **Per una nuova sessione di Claude (o chiunque aggiunga un progetto al Pi): leggi tutto questo file prima di scegliere porte, nomi o configurazioni.**
 > Sul Pi girano già diverse app. Porte, nomi di container, reti, volumi, nomi Tailscale, percorsi pubblici e cookie elencati qui sotto **sono occupati**: non darli per liberi. In caso di dubbio non indovinare, ma chiedi all'utente di lanciare i comandi della sezione 9 e lavora sul loro output.
@@ -47,7 +47,7 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8089 | 0.0.0.0 | Impostore (nginx) | |
 | 8090 | 0.0.0.0 | Impasti e ImpastiPLUS, repo `pizzapp` (Node) | |
 | 8091 | 127.0.0.1 | Infernotuffatori (Node) | solo per le prove dal Pi: l'ingresso HTTPS arriva all'app dalla rete Docker `ingresso-infernotuffatori` (sezione 5) |
-| 8765 | 127.0.0.1 | Meteo | app aggiunta fuori da queste sessioni (cartella `~/parole/meteo`) |
+| 8765 | 127.0.0.1 | Meteo | repo `meteo`, cartella `~/parole/meteo` |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
@@ -60,7 +60,7 @@ Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei se
 
 ## 3. App, repo, cartelle e indirizzi
 
-Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi, che segue `main`.
+Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tranne Meteo, in `~/parole/meteo`), che segue `main`.
 
 | App | Repo | Cartella sul Pi | Progetto compose | LAN | Tailnet (HTTPS, senza porta) |
 |---|---|---|---|---|---|
@@ -73,7 +73,7 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 | Impostore (gioco) | `impostore` | `~/impostore` | `impostore` | `:8089` | `https://impostore.<tailnet>.ts.net` |
 | Impasti e ImpastiPLUS (impasti per la pizza, pagina di scelta in `/`) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
 | Infernotuffatori (build di Helldivers 2, **condivisa con un amico**) | `infernotuffatori` | `~/infernotuffatori` | `infernotuffatori` | – (solo `127.0.0.1`) | `https://infernotuffatori.<tailnet>.ts.net` |
-| Meteo | ? (non gestita qui) | `~/parole/meteo` | ? | – | `https://meteo.<tailnet>.ts.net` |
+| Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | – | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 
 `<tailnet>` è il nome della tailnet dell'utente (si legge con `tailscale status` o nel pannello Tailscale). Gli indirizzi `http://vito:<porta>` (nome breve) funzionano dalla tailnet come riserva.
@@ -92,6 +92,7 @@ onlineemu-romm-1, onlineemu-db-1
 impostore-impostore-1
 pizzapp-pizzapp-1
 infernotuffatori-infernotuffatori-1
+meteo (nome fisso: container_name nel compose)
 ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,infernotuffatori}-1
 ```
 
@@ -171,7 +172,7 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
 | `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14), catalogo aggiornato dalla wiki con le icone (`catalogo/`) e ordini di gioco con il loro storico (`ordini/`) |
 | `ingressi-https_<app>-state` (9) | identità dei dispositivi Tailscale per app |
-| volumi di Chess e Meteo | non gestiti qui |
+| volumi di Chess | non gestiti qui (Meteo non ne ha: tiene solo una cache in memoria) |
 
 Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update.sh` fanno solo `docker image prune -f` (immagini, non volumi).
 
@@ -195,6 +196,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   */5 * * * * cd /home/pepe/impostore && ./update.sh >> /home/pepe/impostore/update.log 2>&1
   */5 * * * * cd /home/pepe/pizzapp && ./update.sh >> /home/pepe/pizzapp/update.log 2>&1
   */5 * * * * cd /home/pepe/infernotuffatori && ./update.sh >> /home/pepe/infernotuffatori/update.log 2>&1
+  */5 * * * * cd /home/pepe/parole/meteo && ./update.sh >> /home/pepe/parole/meteo/update.log 2>&1
   45 4 * * 1 cd /home/pepe/ingressi-https && docker compose pull -q && docker compose up -d >> /home/pepe/ingressi-https/update.log 2>&1
   ```
 
@@ -250,7 +252,7 @@ Note:
 - Parole ha il login **disattivato** (`DISABLE_LOGIN=1` nel `~/parole/.env`), in via temporanea.
 - `vito` risulta ancora pubblicato nel DNS pubblico (residuo del vecchio funnel). Per toglierlo andrebbe ristretto il permesso funnel con un tag su `parole-esercizi` nelle regole del pannello Tailscale: rimandato dall'utente.
 - La cartella `~/parole/meteo` sta dentro la clone di Parole: non dà problemi (non entra nell'immagine, git la ignora), ma un progetto nuovo va messo in `~/<nome>`, non dentro un'altra repo.
-- Meteo e Chess non sono stati sviluppati in queste sessioni: per dettagli sulle loro configurazioni guardare le loro repo o chiedere all'utente.
+- Chess non è stato sviluppato in queste sessioni: per i dettagli guardare la sua repo o chiedere all'utente. Nemmeno Meteo, che dal 2026-10-30 ha però `CLAUDE.md` e `update.sh` come le altre app.
 
 ---
 
@@ -258,7 +260,7 @@ Note:
 
 Due livelli, perché nessuna sessione parta senza saperlo:
 
-1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
+1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori, meteo): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
 2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Le istruzioni stanno in **`claude-utente.md`** (questa repo); lo script le scarica a ogni nuova sessione e le mette tra le impostazioni personali di Claude Code (`~/.claude/CLAUDE.md`), così una modifica a `claude-utente.md` vale da sola per le sessioni successive. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questa riga; se si usano più ambienti, va messa in ognuno:
 
 ```bash
