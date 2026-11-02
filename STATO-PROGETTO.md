@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-10-30. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-11-02. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
@@ -22,11 +22,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Impostore (gioco) | `Vito-Pepe/impostore` | `http://192.168.1.22:8089` | `https://impostore.<tailnet>.ts.net` | 8089 |
 | Impasti e ImpastiPLUS (impasti per la pizza) | `Vito-Pepe/pizzapp` | `http://192.168.1.22:8090` | `https://pizzapp.<tailnet>.ts.net` | 8090 |
 | Infernotuffatori (build di Helldivers 2) | `Vito-Pepe/infernotuffatori` | – | `https://infernotuffatori.<tailnet>.ts.net`, anche per un amico (dispositivo condiviso) | 127.0.0.1:8091 |
+| LogoApp (giochi logopedici) | `Vito-Pepe/logoapp` | – | `https://logoapp.<tailnet>.ts.net` (solo tailnet) | 127.0.0.1:8092 |
 | Meteo | `Vito-Pepe/meteo` (cartella `~/parole/meteo`) | `http://192.168.1.22:8765` | `https://meteo.<tailnet>.ts.net` | 8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
-Porte occupate sul Pi: 8080–8091 (8084, 8086 e 8091 solo su `127.0.0.1`) e 8765 (Meteo). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
+Porte occupate sul Pi: 8080–8092 (8084, 8086, 8091 e 8092 solo su `127.0.0.1`) e 8765 (Meteo). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -154,10 +155,16 @@ Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riq
 
 **Dati**: server Node senza dipendenze, dati nel volume `infernotuffatori_dati` con un backup al giorno.
 
+### LogoApp (giochi logopedici)
+
+Repo `logoapp`, pagina `https://logoapp.<tailnet>.ts.net`, riquadro **LogoApp** nella homepage (solo con la homepage in https: in LAN non c'è). Strumento logopedico della Dott.ssa Flavia Palazzo: si scelgono un fonema consonantico (o un gruppo come SP, ST, consonante + R), la posizione e la struttura della parola (CVCV, CVCCV…), e sei minigiochi (Memory, Gioco dell'oca, Coppie minime, Tombola, Puzzle, Occhio di lince) usano solo le parole giuste, da una banca di 662 parole con i pittogrammi ARASAAC (CC BY-NC-SA: uso non commerciale). Carte da stampare in PDF; dall'iPad si aggiunge alla schermata Home e funziona anche senza rete (service worker).
+
+**Solo tailnet** per scelta dell'utente: porta solo su `127.0.0.1`, niente LAN. **Dati**: server Node senza dipendenze (come Impasti); le parole caricate nella Libreria, con le immagini, e le correzioni stanno nel volume `logoapp_dati` (`logoapp.json`, un backup al giorno), uguali su tutti i dispositivi. Aperta con doppio clic su `index.html` (PC, senza Pi) salva invece nel browser. Niente password, come le altre app di casa.
+
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera: oggi 8080–8091 sono occupate, quindi dalla 8092 in su (verificare con `ss -ltn | grep ':80'`).
+2. Porta locale libera: oggi 8080–8092 sono occupate, quindi dalla 8093 in su (verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti. Un dispositivo da condividere con persone fuori dalla tailnet va su una rete sua, non su quella del Pi (come `infernotuffatori`).
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
@@ -218,7 +225,8 @@ Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riq
 - [x] Infernotuffatori installata sul Pi e provata ("funziona"): ingresso con rete sua, Disable key expiry su `infernotuffatori`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`. Dispositivo condiviso con l'amico.
 - [ ] Infernotuffatori: controllare che le build dell'amico portino il suo nome (identità dal dispositivo condiviso).
 - [ ] Meteo: `CLAUDE.md`, `update.sh` e la scheda Mappa nella repo (PR meteo #2). Sul Pi: in `~/parole/meteo` passare da `claude/meteo-app` a `main`, `git pull`, `docker compose up -d --build` e riga di cron.
-- [ ] Scegliere la prossima app da aggiungere (dalla porta 8092).
+- [ ] LogoApp: installarla sul Pi (`~/logoapp`, porta 8092 solo su `127.0.0.1`, riga di cron), avviare il dispositivo `logoapp` di `ingressi-https` (Disable key expiry, chiave revocata, `TS_AUTHKEY` tolta dal `.env`), provarla dall'iPad e aggiungerla alla schermata Home.
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8093).
 
 ## Per riprendere con Claude
 
