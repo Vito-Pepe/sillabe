@@ -1,6 +1,6 @@
 # Infrastruttura del Raspberry Pi: cosa è già occupato
 
-Ultimo aggiornamento: 2026-10-30.
+Ultimo aggiornamento: 2026-11-02.
 
 > **Per una nuova sessione di Claude (o chiunque aggiunga un progetto al Pi): leggi tutto questo file prima di scegliere porte, nomi o configurazioni.**
 > Sul Pi girano già diverse app. Porte, nomi di container, reti, volumi, nomi Tailscale, percorsi pubblici e cookie elencati qui sotto **sono occupati**: non darli per liberi. In caso di dubbio non indovinare, ma chiedi all'utente di lanciare i comandi della sezione 9 e lavora sul loro output.
@@ -47,12 +47,13 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8089 | 0.0.0.0 | Impostore (nginx) | |
 | 8090 | 0.0.0.0 | Impasti e ImpastiPLUS, repo `pizzapp` (Node) | |
 | 8091 | 127.0.0.1 | Infernotuffatori (Node) | solo per le prove dal Pi: l'ingresso HTTPS arriva all'app dalla rete Docker `ingresso-infernotuffatori` (sezione 5) |
+| 8092 | 127.0.0.1 | LogoApp (Node) | solo per l'ingresso HTTPS (dispositivo `logoapp` di `ingressi-https`): l'app si apre solo dalla tailnet, niente LAN |
 | 8765 | 0.0.0.0 | Meteo | repo `meteo`, cartella `~/parole/meteo` (aperta anche alla LAN: sezione 10) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
 
-**Prima porta libera consigliata per un'app nuova: 8092**, poi 8093, ... Verificare sempre prima (sezione 9).
+**Prima porta libera consigliata per un'app nuova: 8093**, poi 8094, ... Verificare sempre prima (sezione 9).
 
 **Regola:** pubblica su `0.0.0.0` solo ciò che deve essere raggiungibile dalla LAN; ciò che serve solo a un proxy sul Pi (Tailscale, funnel) va su `127.0.0.1:<porta>`.
 
@@ -73,6 +74,7 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 | Impostore (gioco) | `impostore` | `~/impostore` | `impostore` | `:8089` | `https://impostore.<tailnet>.ts.net` |
 | Impasti e ImpastiPLUS (impasti per la pizza, pagina di scelta in `/`) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
 | Infernotuffatori (build di Helldivers 2, **condivisa con un amico**) | `infernotuffatori` | `~/infernotuffatori` | `infernotuffatori` | – (solo `127.0.0.1`) | `https://infernotuffatori.<tailnet>.ts.net` |
+| LogoApp (giochi logopedici, **solo tailnet**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
 | Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 
@@ -92,8 +94,9 @@ onlineemu-romm-1, onlineemu-db-1
 impostore-impostore-1
 pizzapp-pizzapp-1
 infernotuffatori-infernotuffatori-1
+logoapp-logoapp-1
 meteo (nome fisso: container_name nel compose)
-ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,infernotuffatori}-1
+ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,logoapp,infernotuffatori}-1
 ```
 
 ---
@@ -106,7 +109,7 @@ ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,in
 |---|---|---|
 | `vito` | il Pi (Tailscale sull'host) | `tailscale serve` **solo** `443 -> http://127.0.0.1:8081` (homepage). Niente funnel |
 | `parole-esercizi` | container `parole-tailscale-public-1` (repo parole) | **funnel su Internet**, vedi sotto |
-| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>` |
+| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>` |
 | `infernotuffatori` | container di `ingressi-https` con **rete sua** (`ingresso-infernotuffatori`, niente `network_mode: host`) | **condiviso con un amico** (Machines → Share); `443 -> http://infernotuffatori-app:3000`. L'app riconosce chi entra dalle intestazioni `Tailscale-User-*` di `tailscale serve` |
 
 Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso Tailscale aggiunge un numero (`parole-1`), da evitare.
@@ -147,7 +150,7 @@ Le app con una parte pubblica stanno su reti con **bridge dal nome fisso**, isol
 | `br-giochi` | `giochi-net` | homepage | `giochi-firewall.sh` | `giochi-firewall.service` |
 | `br-minigiochi` | `giochi-net` | minigiochi | `minigiochi-firewall.sh` | `minigiochi-firewall.service` |
 
-Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori, meteo) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet. Meteo esce su Internet per le previsioni (`api.open-meteo.com`, `geocoding-api.open-meteo.com`), il nome dei luoghi (`nominatim.openstreetmap.org`) e, dal 2026-10-30, le mappe della scheda Mappa (`tile.openstreetmap.org`, scaricate dal server con cache in memoria); solo letture, non riceve niente da Internet.
+Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori, meteo, logoapp) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet. Meteo esce su Internet per le previsioni (`api.open-meteo.com`, `geocoding-api.open-meteo.com`), il nome dei luoghi (`nominatim.openstreetmap.org`) e, dal 2026-10-30, le mappe della scheda Mappa (`tile.openstreetmap.org`, scaricate dal server con cache in memoria); solo letture, non riceve niente da Internet.
 
 | Rete | Chi la crea | Chi la usa | A cosa serve |
 |---|---|---|---|
@@ -172,7 +175,8 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
 | `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14), catalogo aggiornato dalla wiki con le icone (`catalogo/`) e ordini di gioco con il loro storico (`ordini/`) |
-| `ingressi-https_<app>-state` (9) | identità dei dispositivi Tailscale per app |
+| `ingressi-https_<app>-state` (10) | identità dei dispositivi Tailscale per app |
+| `logoapp_dati` | parole caricate nella Libreria di LogoApp, con le immagini dentro `logoapp.json`, e correzioni alle parole incluse; una copia al giorno in `backup/` (ultime 14) |
 | volumi di Chess | non gestiti qui (Meteo non ne ha: tiene solo una cache in memoria) |
 
 Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update.sh` fanno solo `docker image prune -f` (immagini, non volumi).
@@ -198,6 +202,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   */5 * * * * cd /home/pepe/pizzapp && ./update.sh >> /home/pepe/pizzapp/update.log 2>&1
   */5 * * * * cd /home/pepe/infernotuffatori && ./update.sh >> /home/pepe/infernotuffatori/update.log 2>&1
   */5 * * * * cd /home/pepe/parole/meteo && ./update.sh >> /home/pepe/parole/meteo/update.log 2>&1
+  */5 * * * * cd /home/pepe/logoapp && ./update.sh >> /home/pepe/logoapp/update.log 2>&1
   45 4 * * 1 cd /home/pepe/ingressi-https && docker compose pull -q && docker compose up -d >> /home/pepe/ingressi-https/update.log 2>&1
   ```
 
@@ -262,7 +267,7 @@ Note:
 
 Due livelli, perché nessuna sessione parta senza saperlo:
 
-1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori, meteo): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
+1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori, meteo, logoapp): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
 2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Le istruzioni stanno in **`claude-utente.md`** (questa repo); lo script le scarica a ogni nuova sessione e le mette tra le impostazioni personali di Claude Code (`~/.claude/CLAUDE.md`), così una modifica a `claude-utente.md` vale da sola per le sessioni successive. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questa riga; se si usano più ambienti, va messa in ognuno:
 
 ```bash
