@@ -123,7 +123,7 @@ Server Node senza dipendenze, dati in un file JSON nel volume `pizzapp_dati` con
 
 ### Infernotuffatori (build di Helldivers 2)
 
-Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riquadro **Infernotuffatori** nella homepage (solo con la homepage in https: in LAN non c'è). Fa la parte "costruisci e consulta le build" del builder di democracy-hub.net:
+Repo `infernotuffatori` (**privata** dal 2026-11-02, il Pi la scarica con una deploy key: `INFRASTRUTTURA-PI.md`, sezione 7), pagina `https://infernotuffatori.<tailnet>.ts.net`, riquadro **Infernotuffatori** nella homepage (solo con la homepage in https: in LAN non c'è). Fa la parte "costruisci e consulta le build" del builder di democracy-hub.net:
 - elenco delle build di tutti, per fazione, con riordino trascinando;
 - costruttore con la scelta ordinata per efficacia o per quanto alza il punteggio della build, e i **consigli** pezzo per pezzo ("Metti", "Completa i posti vuoti");
 - **build migliore** per ogni fazione: la potenza totale più alta tra le build che si possono portare (uno zaino, un'arma di supporto e un veicolo al massimo; passiva e peso di un'armatura vera), da cambiare e salvare;
@@ -227,6 +227,7 @@ Repo `logoapp`, pagina `https://logoapp.<tailnet>.ts.net`, riquadro **LogoApp** 
 - [ ] Meteo: `CLAUDE.md`, `update.sh` e la scheda Mappa nella repo (PR meteo #2). Sul Pi: in `~/parole/meteo` passare da `claude/meteo-app` a `main`, `git pull`, `docker compose up -d --build` e riga di cron.
 - [x] LogoApp installata sul Pi (`~/logoapp`, porta 8092 solo su `127.0.0.1`, riga di cron) e dispositivo `logoapp` di `ingressi-https` avviato (`Startup complete`), con Disable key expiry, chiave revocata e `TS_AUTHKEY` tolta dal `.env`. Aperta dal telefono su `https://logoapp.<tailnet>.ts.net` e aggiunta alla schermata Home: funziona.
 - [x] LogoApp: repo resa privata; sul Pi deploy key di sola lettura `~/.ssh/logoapp_deploy`, host `github-logoapp` in `~/.ssh/config` e remote `git@github-logoapp:Vito-Pepe/logoapp.git`.
+- [x] Infernotuffatori: repo resa privata, come LogoApp: deploy key `~/.ssh/infernotuffatori_deploy`, host `github-infernotuffatori`, remote `git@github-infernotuffatori:Vito-Pepe/infernotuffatori.git`.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8093).
 
 ## Per riprendere con Claude
