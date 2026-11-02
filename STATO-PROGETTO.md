@@ -159,7 +159,7 @@ Repo `infernotuffatori`, pagina `https://infernotuffatori.<tailnet>.ts.net`, riq
 
 Repo `logoapp`, pagina `https://logoapp.<tailnet>.ts.net`, riquadro **LogoApp** nella homepage (solo con la homepage in https: in LAN non c'è). Strumento logopedico della Dott.ssa Flavia Palazzo: si scelgono un fonema consonantico (o un gruppo come SP, ST, consonante + R), la posizione e la struttura della parola (CVCV, CVCCV…), e sei minigiochi (Memory, Gioco dell'oca, Coppie minime, Tombola, Puzzle, Occhio di lince) usano solo le parole giuste, da una banca di 662 parole con i pittogrammi ARASAAC (CC BY-NC-SA: uso non commerciale). Carte da stampare in PDF; dall'iPad si aggiunge alla schermata Home e funziona anche senza rete (service worker).
 
-**Solo tailnet** per scelta dell'utente: porta solo su `127.0.0.1`, niente LAN. **Dati**: server Node senza dipendenze (come Impasti); le parole caricate nella Libreria, con le immagini, e le correzioni stanno nel volume `logoapp_dati` (`logoapp.json`, un backup al giorno), uguali su tutti i dispositivi. Aperta con doppio clic su `index.html` (PC, senza Pi) salva invece nel browser. Niente password, come le altre app di casa.
+**Solo tailnet** per scelta dell'utente: porta solo su `127.0.0.1`, niente LAN. **Dati**: server Node senza dipendenze (come Impasti); le parole caricate nella Libreria, con le immagini, e le correzioni stanno nel volume `logoapp_dati` (`logoapp.json`, un backup al giorno), uguali su tutti i dispositivi. Aperta con doppio clic su `index.html` (PC, senza Pi) salva invece nel browser. Niente password, come le altre app di casa. **Repo privata** dal 2026-11-02: il Pi la scarica con una deploy key di sola lettura (`INFRASTRUTTURA-PI.md`, sezione 7).
 
 ## Aggiungere una nuova app
 
@@ -226,6 +226,7 @@ Repo `logoapp`, pagina `https://logoapp.<tailnet>.ts.net`, riquadro **LogoApp** 
 - [ ] Infernotuffatori: controllare che le build dell'amico portino il suo nome (identità dal dispositivo condiviso).
 - [ ] Meteo: `CLAUDE.md`, `update.sh` e la scheda Mappa nella repo (PR meteo #2). Sul Pi: in `~/parole/meteo` passare da `claude/meteo-app` a `main`, `git pull`, `docker compose up -d --build` e riga di cron.
 - [x] LogoApp installata sul Pi (`~/logoapp`, porta 8092 solo su `127.0.0.1`, riga di cron) e dispositivo `logoapp` di `ingressi-https` avviato (`Startup complete`), con Disable key expiry, chiave revocata e `TS_AUTHKEY` tolta dal `.env`. Aperta dal telefono su `https://logoapp.<tailnet>.ts.net` e aggiunta alla schermata Home: funziona.
+- [x] LogoApp: repo resa privata; sul Pi deploy key di sola lettura `~/.ssh/logoapp_deploy`, host `github-logoapp` in `~/.ssh/config` e remote `git@github-logoapp:Vito-Pepe/logoapp.git`.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8093).
 
 ## Per riprendere con Claude
