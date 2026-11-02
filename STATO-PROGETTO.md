@@ -225,7 +225,7 @@ Repo `logoapp`, pagina `https://logoapp.<tailnet>.ts.net`, riquadro **LogoApp** 
 - [x] Infernotuffatori installata sul Pi e provata ("funziona"): ingresso con rete sua, Disable key expiry su `infernotuffatori`, chiave revocata e `TS_AUTHKEY` tolta dal `.env` di `ingressi-https`. Dispositivo condiviso con l'amico.
 - [ ] Infernotuffatori: controllare che le build dell'amico portino il suo nome (identità dal dispositivo condiviso).
 - [ ] Meteo: `CLAUDE.md`, `update.sh` e la scheda Mappa nella repo (PR meteo #2). Sul Pi: in `~/parole/meteo` passare da `claude/meteo-app` a `main`, `git pull`, `docker compose up -d --build` e riga di cron.
-- [ ] LogoApp: installarla sul Pi (`~/logoapp`, porta 8092 solo su `127.0.0.1`, riga di cron), avviare il dispositivo `logoapp` di `ingressi-https` (Disable key expiry, chiave revocata, `TS_AUTHKEY` tolta dal `.env`), provarla dall'iPad e aggiungerla alla schermata Home.
+- [x] LogoApp installata sul Pi (`~/logoapp`, porta 8092 solo su `127.0.0.1`, riga di cron) e dispositivo `logoapp` di `ingressi-https` avviato (`Startup complete`), con Disable key expiry, chiave revocata e `TS_AUTHKEY` tolta dal `.env`. Aperta dal telefono su `https://logoapp.<tailnet>.ts.net` e aggiunta alla schermata Home: funziona.
 - [ ] Scegliere la prossima app da aggiungere (dalla porta 8093).
 
 ## Per riprendere con Claude
