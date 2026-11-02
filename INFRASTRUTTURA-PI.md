@@ -61,7 +61,7 @@ Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei se
 
 ## 3. App, repo, cartelle e indirizzi
 
-Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tranne Meteo, in `~/parole/meteo`), che segue `main`.
+Tutte le repo sono su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tranne Meteo, in `~/parole/meteo`), che segue `main`. Sono **pubbliche**, tranne **`logoapp` e `infernotuffatori`, private dal 2026-11-02**: il Pi le scarica con una deploy key (sezione 7).
 
 | App | Repo | Cartella sul Pi | Progetto compose | LAN | Tailnet (HTTPS, senza porta) |
 |---|---|---|---|---|---|
@@ -73,8 +73,8 @@ Tutte le repo sono **pubbliche** su GitHub sotto `Vito-Pepe`, clonate in `~/<nom
 | onlineEmu (giochi retro, RomM) | `onlineEmu` | `~/onlineEmu` | `onlineemu` | `:8088` | `https://retro.<tailnet>.ts.net` |
 | Impostore (gioco) | `impostore` | `~/impostore` | `impostore` | `:8089` | `https://impostore.<tailnet>.ts.net` |
 | Impasti e ImpastiPLUS (impasti per la pizza, pagina di scelta in `/`) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
-| Infernotuffatori (build di Helldivers 2, **condivisa con un amico**) | `infernotuffatori` | `~/infernotuffatori` | `infernotuffatori` | – (solo `127.0.0.1`) | `https://infernotuffatori.<tailnet>.ts.net` |
-| LogoApp (giochi logopedici, **solo tailnet**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
+| Infernotuffatori (build di Helldivers 2, **condivisa con un amico**, repo **privata**) | `infernotuffatori` | `~/infernotuffatori` | `infernotuffatori` | – (solo `127.0.0.1`) | `https://infernotuffatori.<tailnet>.ts.net` |
+| LogoApp (giochi logopedici, **solo tailnet**, repo **privata**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
 | Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 
@@ -187,6 +187,20 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 
 - Il Pi segue **`main`** in tutte le repo. Si lavora su un branch, si apre una PR verso `main`, l'utente la unisce su GitHub con **"Create a merge commit"** e **non cancella il branch**. Quando chiedi di unire una PR, dai il **link diretto** e verifica prima che sia ancora aperta.
 - Ogni repo ha un `update.sh`: `git fetch`, e solo se ci sono commit nuovi `git pull --ff-only` + `docker compose up -d --build` (+ `docker image prune -f`). Gira da cron ogni 5 minuti, **senza `sudo`** (con sudo `.git` diventa di root e i pull si rompono).
+- **Repo privata** (oggi `logoapp` e `infernotuffatori`): senza credenziali `git fetch` fallisce e il cron smette di aggiornare senza avvisare. Il Pi la scarica con una **deploy key** di sola lettura, una per repo (GitHub non accetta la stessa chiave su due repo):
+  - chiave `~/.ssh/<nome>_deploy` (ed25519, senza passphrase), aggiunta in repo → Settings → Deploy keys **senza** «Allow write access»;
+  - in `~/.ssh/config` un nome host proprio della repo, così le altre restano su https senza chiave:
+
+    ```
+    Host github-logoapp
+        HostName github.com
+        User git
+        IdentityFile ~/.ssh/logoapp_deploy
+        IdentitiesOnly yes
+    ```
+  - remote della clone: `git@github-<nome>:Vito-Pepe/<nome>.git` (`git -C ~/<nome> remote -v` per controllare);
+  - la prima connessione va fatta a mano (`ssh -T github-<nome>`) per accettare l'impronta di GitHub, che il cron non può confermare: ed25519 `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`, ora in `~/.ssh/known_hosts`. Risposta attesa: `Hi Vito-Pepe/<nome>! You've successfully authenticated…`;
+  - in uso: `logoapp` (`~/.ssh/logoapp_deploy`, host `github-logoapp`) e `infernotuffatori` (`~/.ssh/infernotuffatori_deploy`, host `github-infernotuffatori`), tutte e due con deploy key «Raspberry Pi».
 - Crontab dell'utente `pepe` (le due righe di `ingressi-https` vanno aggiunte a mano dopo l'installazione: controllare con `crontab -l`):
 
   ```
