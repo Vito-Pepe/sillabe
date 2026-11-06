@@ -1,6 +1,6 @@
 # Infrastruttura del Raspberry Pi: cosa è già occupato
 
-Ultimo aggiornamento: 2026-11-02.
+Ultimo aggiornamento: 2026-11-07.
 
 > **Per una nuova sessione di Claude (o chiunque aggiunga un progetto al Pi): leggi tutto questo file prima di scegliere porte, nomi o configurazioni.**
 > Sul Pi girano già diverse app. Porte, nomi di container, reti, volumi, nomi Tailscale, percorsi pubblici e cookie elencati qui sotto **sono occupati**: non darli per liberi. In caso di dubbio non indovinare, ma chiedi all'utente di lanciare i comandi della sezione 9 e lavora sul loro output.
@@ -77,6 +77,7 @@ Tutte le repo sono su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tr
 | LogoApp (giochi logopedici, **solo tailnet**, repo **privata**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
 | Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
+| Guardiano (tiene accese le app: riavvia i container fermi o bloccati, sezione 7) | `guardiano` | `~/guardiano` | – (script dal cron, nessun container) | – | – |
 
 `<tailnet>` è il nome della tailnet dell'utente (si legge con `tailscale status` o nel pannello Tailscale). Gli indirizzi `http://vito:<porta>` (nome breve) funzionano dalla tailnet come riserva.
 
@@ -218,9 +219,15 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   */5 * * * * cd /home/pepe/parole/meteo && ./update.sh >> /home/pepe/parole/meteo/update.log 2>&1
   */5 * * * * cd /home/pepe/logoapp && ./update.sh >> /home/pepe/logoapp/update.log 2>&1
   45 4 * * 1 cd /home/pepe/ingressi-https && docker compose pull -q && docker compose up -d >> /home/pepe/ingressi-https/update.log 2>&1
+  */5 * * * * cd /home/pepe/guardiano && ./update.sh >> /home/pepe/guardiano/update.log 2>&1
+  2-59/5 * * * * cd /home/pepe/guardiano && ./guardiano.sh >> /home/pepe/guardiano/guardiano.log 2>&1
   ```
 
   Gli orari settimanali già usati: lunedì 4:30 e 4:45. Per un job settimanale nuovo scegliere un altro orario.
+- **Guardiano** (repo `guardiano`, cartella `~/guardiano`, dal 2026-11-07): `guardiano.sh` gira dal cron ai minuti 2, 7, 12… (sfasato rispetto agli `update.sh`) e, per ogni cartella del suo `app.conf`, avvia con `docker compose up -d` i servizi fermi o spariti e fa `docker restart` dei container `unhealthy` (Docker li segna ma non li riavvia). Al massimo 3 interventi in un'ora per app; salta il giro mentre un `update.sh` o un build/pull di compose è in corso; scrive in `~/guardiano/guardiano.log` solo quando interviene o qualcosa cambia. Niente sudo, niente container: `update.sh` fa solo `git pull`.
+  - **Per fermare un'app apposta** (`docker compose stop`/`down`, manutenzione): prima `~/guardiano/guardiano.sh pausa <app>` (o `pausa tutto`), poi `riprendi <app>`. Altrimenti entro 5 minuti il guardiano la riaccende. `<app>` è l'ultima parte della cartella (`logoapp`, `meteo`, `Chess`…).
+  - Riepilogo per app e container: `~/guardiano/guardiano.sh stato`. Cosa farebbe adesso, senza toccare niente: `~/guardiano/guardiano.sh prova`.
+  - Si accorge di un'app **bloccata** (accesa ma che non risponde) solo se il compose le dà un `healthcheck`: oggi lo hanno LogoApp, Impasti (`pizzapp`) e il database di onlineEmu. Le altre vengono riaccese se si fermano, ma non riavviate se si bloccano.
 - Segreti (password, auth key) solo nel `.env` della repo sul Pi, **mai su git** (`.env` è in `.gitignore`). Per inserirli senza lasciarli nella cronologia: riga che inizia con uno spazio, ` read -rsp "Password: " P && echo "NOME=$P" >> .env && unset P && echo`.
 - **Claude non può creare repo su GitHub** (errore 403): l'utente la crea a mano (Public, con "Add a README file" per avere `main`), poi Claude la collega con accesso in scrittura.
 - Un file montato singolarmente (`./file:/percorso`) non vede gli aggiornamenti di `git pull`: montare la cartella, o ricreare il container (`--force-recreate`).
@@ -232,10 +239,10 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 1. **Nome**: repo, cartella sul Pi e progetto compose con un nome nuovo (non in sezione 3).
 2. **Porta**: la prima libera da 8092 in su, dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
 3. **Immagini**: multi-arch o arm64 (es. `nginx:alpine`, `node:22-alpine`).
-4. **Sicurezza** (come le altre app): `read_only: true` dove possibile, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `restart: unless-stopped`. Se ha una parte pubblica: bridge con nome fisso e firewall come in sezione 5.
+4. **Sicurezza** (come le altre app): `read_only: true` dove possibile, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `restart: unless-stopped`, e un `healthcheck` (come LogoApp e Impasti), così il guardiano la riavvia se si blocca. Se ha una parte pubblica: bridge con nome fisso e firewall come in sezione 5.
 5. **Cookie**: i cookie del browser **non distinguono le porte**, quindi le app su `vito:<porta>` condividono i cookie. Nomi già usati: `s` (Parole, Path `/`), `giochi` (homepage, Path `/giochi/`), `minigiochi` (Minigiochi, Path `/api/`), `romm_session` e `romm_csrftoken` (onlineEmu, Path `/`). Usare un nome nuovo e specifico (es. `nomeapp_sess`).
 6. **File statici**: dare nomi propri a CSS e JS (es. `nomeapp.css`), non `style.css` o `app.js`: Sillabe mette in cache CSS e JS per un giorno, e app sullo stesso nome host possono prendersi lo stile a vicenda.
-7. **`update.sh`**: copiarlo da `homepage` o `minigiochi`, e aggiungere la riga di cron (sezione 7).
+7. **`update.sh`**: copiarlo da `homepage` o `minigiochi`, e aggiungere la riga di cron (sezione 7). Aggiungere la cartella anche ad `app.conf` della repo `guardiano`, con una PR: altrimenti il guardiano non la tiene accesa (e nel suo registro la segnala come "progetto compose che non controllo").
 8. **HTTPS senza porta**: nella repo `ingressi-https` aggiungere `serve/<nome>.json` (copiandone uno e cambiando la porta) e un servizio nel compose con `TS_HOSTNAME: <nome>` e il suo volume. Al primo avvio serve una auth key (Reusable o monouso, non Ephemeral), poi Disable key expiry e revoca della chiave. **Mai** `tailscale serve` sull'host. Se il dispositivo andrà condiviso con qualcuno fuori dalla tailnet: rete sua, non `network_mode: host` (sezione 4).
 9. **Homepage**: una riga in `homepage/app/apps.js` con `lanPort` e `tsHost: "<nome>"`.
 10. **Parte pubblica** (se serve): prefisso nuovo in `parole/tailscale/serve.json` verso `127.0.0.1:<porta>`, poi ricreare `tailscale-public` (sezione 4).
@@ -260,6 +267,7 @@ systemctl list-units --all '*firewall*'
 
 Note:
 - `sudo` chiede la password di `pepe`.
+- Stato di app e container, con le pause e gli ultimi interventi del guardiano: `~/guardiano/guardiano.sh stato`.
 - Una porta è libera solo se **non** compare in `ss`: anche una porta su `127.0.0.1` è occupata.
 - `docker compose up` stampa `Your kernel does not support memory limit...`: è normale (sezione 1).
 - Subito dopo `docker compose up`, un `curl` può dare "Connection reset by peer": nginx non è ancora pronto, riprovare dopo qualche secondo.
@@ -281,7 +289,7 @@ Note:
 
 Due livelli, perché nessuna sessione parta senza saperlo:
 
-1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori, meteo, logoapp): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
+1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori, meteo, logoapp, guardiano): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
 2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Le istruzioni stanno in **`claude-utente.md`** (questa repo); lo script le scarica a ogni nuova sessione e le mette tra le impostazioni personali di Claude Code (`~/.claude/CLAUDE.md`), così una modifica a `claude-utente.md` vale da sola per le sessioni successive. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questa riga; se si usano più ambienti, va messa in ognuno:
 
 ```bash
