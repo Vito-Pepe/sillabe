@@ -48,12 +48,13 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8090 | 0.0.0.0 | Impasti e ImpastiPLUS, repo `pizzapp` (Node) | |
 | 8091 | 127.0.0.1 | Infernotuffatori (Node) | solo per le prove dal Pi: l'ingresso HTTPS arriva all'app dalla rete Docker `ingresso-infernotuffatori` (sezione 5) |
 | 8092 | 127.0.0.1 | LogoApp (Node) | solo per l'ingresso HTTPS (dispositivo `logoapp` di `ingressi-https`): l'app si apre solo dalla tailnet, niente LAN |
+| 8093 | 127.0.0.1 | Guardiano, pagina di stato (Node) | solo per l'ingresso HTTPS (dispositivo `guardiano` di `ingressi-https`): solo tailnet, niente LAN |
 | 8765 | 0.0.0.0 | Meteo | repo `meteo`, cartella `~/parole/meteo` (aperta anche alla LAN: sezione 10) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
 
-**Prima porta libera consigliata per un'app nuova: 8093**, poi 8094, ... Verificare sempre prima (sezione 9).
+**Prima porta libera consigliata per un'app nuova: 8094**, poi 8095, ... Verificare sempre prima (sezione 9).
 
 **Regola:** pubblica su `0.0.0.0` solo ciò che deve essere raggiungibile dalla LAN; ciò che serve solo a un proxy sul Pi (Tailscale, funnel) va su `127.0.0.1:<porta>`.
 
@@ -77,7 +78,7 @@ Tutte le repo sono su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tr
 | LogoApp (giochi logopedici, **solo tailnet**, repo **privata**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
 | Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
-| Guardiano (tiene accese le app: riavvia i container fermi o bloccati, sezione 7) | `guardiano` | `~/guardiano` | – (script dal cron, nessun container) | – | – |
+| Guardiano (tiene accese le app: riavvia i container fermi o bloccati; pagina di stato con log e pulsanti; sezione 7) | `guardiano` | `~/guardiano` | `guardiano` (solo la pagina: lo script gira dal cron) | – (solo `127.0.0.1`) | `https://guardiano.<tailnet>.ts.net` |
 
 `<tailnet>` è il nome della tailnet dell'utente (si legge con `tailscale status` o nel pannello Tailscale). Gli indirizzi `http://vito:<porta>` (nome breve) funzionano dalla tailnet come riserva.
 
@@ -96,8 +97,9 @@ impostore-impostore-1
 pizzapp-pizzapp-1
 infernotuffatori-infernotuffatori-1
 logoapp-logoapp-1
+guardiano-web-1
 meteo (nome fisso: container_name nel compose)
-ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,logoapp,infernotuffatori}-1
+ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,logoapp,guardiano,infernotuffatori}-1
 ```
 
 ---
@@ -110,7 +112,7 @@ ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,lo
 |---|---|---|
 | `vito` | il Pi (Tailscale sull'host) | `tailscale serve` **solo** `443 -> http://127.0.0.1:8081` (homepage). Niente funnel |
 | `parole-esercizi` | container `parole-tailscale-public-1` (repo parole) | **funnel su Internet**, vedi sotto |
-| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>` |
+| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp`, `guardiano` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>`. **`guardiano` mai condiviso**: dai suoi pulsanti si fermano e riavviano i container |
 | `infernotuffatori` | container di `ingressi-https` con **rete sua** (`ingresso-infernotuffatori`, niente `network_mode: host`) | **condiviso con un amico** (Machines → Share); `443 -> http://infernotuffatori-app:3000`. L'app riconosce chi entra dalle intestazioni `Tailscale-User-*` di `tailscale serve` |
 
 Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso Tailscale aggiunge un numero (`parole-1`), da evitare.
@@ -176,7 +178,7 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
 | `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14), catalogo aggiornato dalla wiki con le icone (`catalogo/`) e ordini di gioco con il loro storico (`ordini/`) |
-| `ingressi-https_<app>-state` (10) | identità dei dispositivi Tailscale per app |
+| `ingressi-https_<app>-state` (11) | identità dei dispositivi Tailscale per app |
 | `logoapp_dati` | parole caricate nella Libreria di LogoApp, con le immagini dentro `logoapp.json`, e correzioni alle parole incluse; una copia al giorno in `backup/` (ultime 14) |
 | volumi di Chess | non gestiti qui (Meteo non ne ha: tiene solo una cache in memoria) |
 
@@ -221,12 +223,14 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   45 4 * * 1 cd /home/pepe/ingressi-https && docker compose pull -q && docker compose up -d >> /home/pepe/ingressi-https/update.log 2>&1
   */5 * * * * cd /home/pepe/guardiano && ./update.sh >> /home/pepe/guardiano/update.log 2>&1
   2-59/5 * * * * cd /home/pepe/guardiano && ./guardiano.sh >> /home/pepe/guardiano/guardiano.log 2>&1
+  * * * * * cd /home/pepe/guardiano && ./guardiano.sh pagina >> /home/pepe/guardiano/guardiano.log 2>&1
   ```
 
   Gli orari settimanali già usati: lunedì 4:30 e 4:45. Per un job settimanale nuovo scegliere un altro orario.
-- **Guardiano** (repo `guardiano`, cartella `~/guardiano`, dal 2026-11-07): `guardiano.sh` gira dal cron ai minuti 2, 7, 12… (sfasato rispetto agli `update.sh`) e, per ogni cartella del suo `app.conf`, avvia con `docker compose up -d` i servizi fermi o spariti e fa `docker restart` dei container `unhealthy` (Docker li segna ma non li riavvia). Al massimo 3 interventi in un'ora per app; salta il giro mentre un `update.sh` o un build/pull di compose è in corso; scrive in `~/guardiano/guardiano.log` solo quando interviene o qualcosa cambia. Niente sudo, niente container: `update.sh` fa solo `git pull`.
+- **Guardiano** (repo `guardiano`, cartella `~/guardiano`, dal 2026-11-07): `guardiano.sh` gira dal cron ai minuti 2, 7, 12… (sfasato rispetto agli `update.sh`) e, per ogni cartella del suo `app.conf`, avvia con `docker compose up -d` i servizi fermi o spariti e fa `docker restart` dei container `unhealthy` (Docker li segna ma non li riavvia). Al massimo 3 interventi in un'ora per app; salta il giro mentre un `update.sh` o un build/pull di compose è in corso; scrive in `~/guardiano/guardiano.log` solo quando interviene o qualcosa cambia. Niente sudo. `update.sh` fa `git pull` e ricostruisce la pagina di stato (sotto).
   - **Per fermare un'app apposta** (`docker compose stop`/`down`, manutenzione): prima `~/guardiano/guardiano.sh pausa <app>` (o `pausa tutto`), poi `riprendi <app>`. Altrimenti entro 5 minuti il guardiano la riaccende. `<app>` è l'ultima parte della cartella (`logoapp`, `meteo`, `Chess`…).
   - Riepilogo per app e container: `~/guardiano/guardiano.sh stato`. Cosa farebbe adesso, senza toccare niente: `~/guardiano/guardiano.sh prova`.
+  - **Pagina di stato** (dal 2026-11-07): `https://guardiano.<tailnet>.ts.net`, riquadro «Guardiano» della homepage in https. Container `guardiano-web-1` (Node, `127.0.0.1:8093`), **senza accesso a Docker**. Ogni minuto `guardiano.sh pagina` (cron) scrive una fotografia di stato e ultime 200 righe di log di ogni container in `/dev/shm/guardiano` (in memoria, non sulla SD; il container la legge in sola lettura). Poi resta in ascolto dei pulsanti **Riavvia / Ferma / Avvia**: la pagina lascia una richiesta in `/dev/shm/guardiano-richieste` (l'unica cartella in cui il container scrive, `chmod 777`); il guardiano la ricontrolla (app e container di `app.conf`, azione ammessa, al massimo 30 all'ora), la esegue e la scrive nel registro. **Ferma** mette anche l'app in pausa (riga `pagina<TAB><container>` in `~/guardiano/pausa/<app>`), così il giro non la riaccende; **Avvia** la toglie. La pagina non può fermare `guardiano-web-1` né `ingressi-https-guardiano-1`. Le due cartelle in `/dev/shm` spariscono a ogni riavvio del Pi: le ricrea `guardiano.sh pagina` entro un minuto, e il container (montate con `create_host_path: false`, così Docker non le crea di root) riparte al giro successivo del guardiano.
   - Si accorge di un'app **bloccata** (accesa ma che non risponde) solo se il container ha un `healthcheck` (nel compose o nel `Dockerfile`). Dal 2026-11-07 ce l'hanno **tutti i container delle app**; lo stato si legge in `docker ps` (`healthy`, `unhealthy`, `health: starting`). Ogni controllo è una richiesta leggera fatta dentro il container verso la sua porta interna: niente login, niente scritture, niente Internet. Dopo 3 errori di fila il container diventa `unhealthy`:
     - nginx (`sillabe-sillabe-1`, `homepage-homepage-1`, `chess-web-1`, `minigiochi-minigiochi-1`, `impostore-impostore-1`): `wget` di `http://127.0.0.1/`, ogni 60 s (compose);
     - `homepage-giochi-1` e `minigiochi-giochi-1`: `wget` di `http://127.0.0.1:3000/giochi/api/session` e `…:3000/api/session`, ogni 60 s (compose);
@@ -244,7 +248,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 ## 8. Checklist per un progetto nuovo
 
 1. **Nome**: repo, cartella sul Pi e progetto compose con un nome nuovo (non in sezione 3).
-2. **Porta**: la prima libera da 8092 in su, dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
+2. **Porta**: la prima libera da 8094 in su, dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
 3. **Immagini**: multi-arch o arm64 (es. `nginx:alpine`, `node:22-alpine`).
 4. **Sicurezza** (come le altre app): `read_only: true` dove possibile, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `restart: unless-stopped`, e un `healthcheck` (come le altre app: richiesta leggera alla porta interna, senza login né scritture, elenco in sezione 7), così il guardiano la riavvia se si blocca. Se ha una parte pubblica: bridge con nome fisso e firewall come in sezione 5.
 5. **Cookie**: i cookie del browser **non distinguono le porte**, quindi le app su `vito:<porta>` condividono i cookie. Nomi già usati: `s` (Parole, Path `/`), `giochi` (homepage, Path `/giochi/`), `minigiochi` (Minigiochi, Path `/api/`), `romm_session` e `romm_csrftoken` (onlineEmu, Path `/`). Usare un nome nuovo e specifico (es. `nomeapp_sess`).
@@ -274,7 +278,7 @@ systemctl list-units --all '*firewall*'
 
 Note:
 - `sudo` chiede la password di `pepe`.
-- Stato di app e container, con le pause e gli ultimi interventi del guardiano: `~/guardiano/guardiano.sh stato`.
+- Stato di app e container, con le pause e gli ultimi interventi del guardiano: `~/guardiano/guardiano.sh stato`, o dal browser `https://guardiano.<tailnet>.ts.net` (con i log).
 - Una porta è libera solo se **non** compare in `ss`: anche una porta su `127.0.0.1` è occupata.
 - `docker compose up` stampa `Your kernel does not support memory limit...`: è normale (sezione 1).
 - Subito dopo `docker compose up`, un `curl` può dare "Connection reset by peer": nginx non è ancora pronto, riprovare dopo qualche secondo.
