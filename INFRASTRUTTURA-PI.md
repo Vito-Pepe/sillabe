@@ -50,12 +50,13 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8091 | 127.0.0.1 | Infernotuffatori (Node) | solo per le prove dal Pi: l'ingresso HTTPS arriva all'app dalla rete Docker `ingresso-infernotuffatori` (sezione 5) |
 | 8092 | 127.0.0.1 | LogoApp (Node) | solo per l'ingresso HTTPS (dispositivo `logoapp` di `ingressi-https`): l'app si apre solo dalla tailnet, niente LAN |
 | 8093 | 127.0.0.1 | Guardiano, pagina di stato (Node) | solo per l'ingresso HTTPS (dispositivo `guardiano` di `ingressi-https`): solo tailnet, niente LAN |
+| 8094 | 127.0.0.1 | LogoApp **collaudo** (Node) | dal 2026-11-10: le modifiche di LogoApp si provano qui prima della produzione; solo per l'ingresso HTTPS (dispositivo `logoapp-collaudo` di `ingressi-https`), solo tailnet |
 | 8765 | 0.0.0.0 | Meteo | repo `meteo`, cartella `~/parole/meteo` (aperta anche alla LAN: sezione 10) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
 
-**Prima porta libera consigliata per un'app nuova: 8094**, poi 8095, ... Verificare sempre prima (sezione 9).
+**Prima porta libera consigliata per un'app nuova: 8095**, poi 8096, ... Verificare sempre prima (sezione 9).
 
 **Regola:** pubblica su `0.0.0.0` solo ciò che deve essere raggiungibile dalla LAN; ciò che serve solo a un proxy sul Pi (Tailscale, funnel) va su `127.0.0.1:<porta>`.
 
@@ -77,6 +78,7 @@ Tutte le repo sono su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tr
 | Impasti e ImpastiPLUS (impasti per la pizza, pagina di scelta in `/`) | `pizzapp` | `~/pizzapp` | `pizzapp` | `:8090` | `https://pizzapp.<tailnet>.ts.net` |
 | Infernotuffatori (build di Helldivers 2, **condivisa con un amico**, repo **privata**) | `infernotuffatori` | `~/infernotuffatori` | `infernotuffatori` | – (solo `127.0.0.1`) | `https://infernotuffatori.<tailnet>.ts.net` |
 | LogoApp (giochi logopedici, **solo tailnet**, repo **privata**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
+| LogoApp **collaudo** (stessa repo, branch **`collaudo`**: le modifiche si provano qui prima della produzione) | `logoapp` | `~/logoapp-collaudo` | `logoapp-collaudo` | – (solo `127.0.0.1`) | `https://logoapp-collaudo.<tailnet>.ts.net` |
 | Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 | Guardiano (tiene accese le app: riavvia i container fermi o bloccati; pagina di stato con log e pulsanti; sezione 7) | `guardiano` | `~/guardiano` | `guardiano` (solo la pagina: lo script gira dal cron) | – (solo `127.0.0.1`) | `https://guardiano.<tailnet>.ts.net` |
@@ -98,9 +100,10 @@ impostore-impostore-1
 pizzapp-pizzapp-1
 infernotuffatori-infernotuffatori-1
 logoapp-logoapp-1
+logoapp-collaudo-logoapp-1
 guardiano-web-1
 meteo (nome fisso: container_name nel compose)
-ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,logoapp,guardiano,infernotuffatori}-1
+ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,logoapp,logoapp-collaudo,guardiano,infernotuffatori}-1
 ```
 
 ---
@@ -113,7 +116,7 @@ ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,lo
 |---|---|---|
 | `vito` | il Pi (Tailscale sull'host) | `tailscale serve` **solo** `443 -> http://127.0.0.1:8081` (homepage). Niente funnel |
 | `parole-esercizi` | container `parole-tailscale-public-1` (repo parole) | **funnel su Internet**, vedi sotto |
-| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp`, `guardiano` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>`. **`guardiano` mai condiviso**: dai suoi pulsanti si fermano e riavviano i container |
+| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp`, `logoapp-collaudo`, `guardiano` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>`. **`guardiano` mai condiviso**: dai suoi pulsanti si fermano e riavviano i container |
 | `infernotuffatori` | container di `ingressi-https` con **rete sua** (`ingresso-infernotuffatori`, niente `network_mode: host`) | **condiviso con un amico** (Machines → Share); `443 -> http://infernotuffatori-app:3000`. L'app riconosce chi entra dalle intestazioni `Tailscale-User-*` di `tailscale serve` |
 
 Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso Tailscale aggiunge un numero (`parole-1`), da evitare.
@@ -154,7 +157,7 @@ Le app con una parte pubblica stanno su reti con **bridge dal nome fisso**, isol
 | `br-giochi` | `giochi-net` | homepage | `giochi-firewall.sh` | `giochi-firewall.service` |
 | `br-minigiochi` | `giochi-net` | minigiochi | `minigiochi-firewall.sh` | `minigiochi-firewall.service` |
 
-Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori, meteo, logoapp) usano la rete predefinita del loro progetto. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet. Meteo esce su Internet per le previsioni (`api.open-meteo.com`, `geocoding-api.open-meteo.com`), il nome dei luoghi (`nominatim.openstreetmap.org`) e, dal 2026-10-30, le mappe della scheda Mappa (`tile.openstreetmap.org`, scaricate dal server con cache in memoria); solo letture, non riceve niente da Internet.
+Gli altri progetti (sillabe, chess, onlineemu, impostore, pizzapp, infernotuffatori, meteo, logoapp, logoapp-collaudo) usano la rete predefinita del loro progetto. Il **collaudo di LogoApp** esce su Internet solo verso `api.github.com`, quando si tocca «Porta in produzione» o si apre la sua pagina «Collaudo» (con il token del suo `.env`, sezione 7); non riceve niente da Internet. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet. Meteo esce su Internet per le previsioni (`api.open-meteo.com`, `geocoding-api.open-meteo.com`), il nome dei luoghi (`nominatim.openstreetmap.org`) e, dal 2026-10-30, le mappe della scheda Mappa (`tile.openstreetmap.org`, scaricate dal server con cache in memoria); solo letture, non riceve niente da Internet.
 
 | Rete | Chi la crea | Chi la usa | A cosa serve |
 |---|---|---|---|
@@ -179,8 +182,9 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
 | `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14), catalogo aggiornato dalla wiki con le icone (`catalogo/`) e ordini di gioco con il loro storico (`ordini/`) |
-| `ingressi-https_<app>-state` (11) | identità dei dispositivi Tailscale per app |
-| `logoapp_dati` | parole caricate nella Libreria di LogoApp, con le immagini dentro `logoapp.json`, e correzioni alle parole incluse; una copia al giorno in `backup/` (ultime 14); dal 2026-11-07 il codice delle ultime 50 stampe in `stampe/` (pagine HTML, si possono perdere); dal 2026-11-10 le registrazioni con la voce dell'utente (parole e sillabe) in `audio/` (un file WAV per registrazione, `logoapp.json` ne tiene l'elenco), e nella copia del giorno anche `backup/audio-<giorno>/` (hard link agli stessi file: non occupano spazio doppio; ultime 14). Quello che succede nell'app (parole, partite con le parole in gioco, stampe) va nei log del container: `docker logs logoapp-logoapp-1` o la pagina del guardiano |
+| `ingressi-https_<app>-state` (12) | identità dei dispositivi Tailscale per app |
+| `logoapp_dati` | parole caricate nella Libreria di LogoApp, con le immagini dentro `logoapp.json`, e correzioni alle parole incluse; una copia al giorno in `backup/` (ultime 14); dal 2026-11-07 il codice delle ultime 50 stampe in `stampe/` (pagine HTML, si possono perdere); dal 2026-11-10 le registrazioni con la voce dell'utente (parole e sillabe) in `audio/` (un file WAV per registrazione, `logoapp.json` ne tiene l'elenco), e nella copia del giorno anche `backup/audio-<giorno>/` (hard link agli stessi file: non occupano spazio doppio; ultime 14). Quello che succede nell'app (parole, partite con le parole in gioco, stampe) va nei log del container: `docker logs logoapp-logoapp-1` o la pagina del guardiano. Dal 2026-11-10 è montato **in sola lettura** anche nel collaudo (`/produzione` di `logoapp-collaudo-logoapp-1`), per «Ricopia i dati di produzione»: il collaudo non lo può cambiare |
+| `logoapp-collaudo_dati` | dati della LogoApp di **collaudo**, stesso formato di `logoapp_dati` (copia del giorno, stampe, registrazioni): prove, si possono perdere; si rifanno con «Ricopia i dati di produzione» |
 | volumi di Chess | non gestiti qui (Meteo non ne ha: tiene solo una cache in memoria) |
 
 Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update.sh` fanno solo `docker image prune -f` (immagini, non volumi).
@@ -189,7 +193,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 
 ## 7. Aggiornamenti automatici e flusso di lavoro
 
-- Il Pi segue **`main`** in tutte le repo. Si lavora su un branch, si apre una PR verso `main`, l'utente la unisce su GitHub con **"Create a merge commit"** e **non cancella il branch**. Quando chiedi di unire una PR, dai il **link diretto** e verifica prima che sia ancora aperta.
+- Il Pi segue **`main`** in tutte le repo. **Eccezione, LogoApp** (dal 2026-11-10): la produzione `~/logoapp` segue `main`, il **collaudo** `~/logoapp-collaudo` segue `collaudo` (branch predefinito della repo). Le PR di LogoApp vanno verso `collaudo` (le unisce Claude, scelta dell'utente); `main` si muove solo con «Porta in produzione» nella pagina «Collaudo», che lo sposta in avanti al commit provato con un **token fine-grained** di GitHub (solo repo `logoapp`, «Contents: Read and write») in `~/logoapp-collaudo/.env`. La produzione non ha token. Il collaudo è una seconda clone della stessa repo con la stessa deploy key (host `github-logoapp`), e il suo `.env` dice anche `COMPOSE_FILE=docker-compose.yml:docker-compose.collaudo.yml` e `PORTA=8094`. Si lavora su un branch, si apre una PR verso `main`, l'utente la unisce su GitHub con **"Create a merge commit"** e **non cancella il branch**. Quando chiedi di unire una PR, dai il **link diretto** e verifica prima che sia ancora aperta.
 - Ogni repo ha un `update.sh`: `git fetch`, e solo se ci sono commit nuovi `git pull --ff-only` + `docker compose up -d --build` (+ `docker image prune -f`). Gira da cron ogni 5 minuti, **senza `sudo`** (con sudo `.git` diventa di root e i pull si rompono).
 - **Repo privata** (oggi `logoapp` e `infernotuffatori`): senza credenziali `git fetch` fallisce e il cron smette di aggiornare senza avvisare. Il Pi la scarica con una **deploy key** di sola lettura, una per repo (GitHub non accetta la stessa chiave su due repo):
   - chiave `~/.ssh/<nome>_deploy` (ed25519, senza passphrase), aggiunta in repo → Settings → Deploy keys **senza** «Allow write access»;
@@ -221,6 +225,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   */5 * * * * cd /home/pepe/infernotuffatori && ./update.sh >> /home/pepe/infernotuffatori/update.log 2>&1
   */5 * * * * cd /home/pepe/parole/meteo && ./update.sh >> /home/pepe/parole/meteo/update.log 2>&1
   */5 * * * * cd /home/pepe/logoapp && ./update.sh >> /home/pepe/logoapp/update.log 2>&1
+  */5 * * * * cd /home/pepe/logoapp-collaudo && ./update.sh >> /home/pepe/logoapp-collaudo/update.log 2>&1
   45 4 * * 1 cd /home/pepe/ingressi-https && docker compose pull -q && docker compose up -d >> /home/pepe/ingressi-https/update.log 2>&1
   */5 * * * * cd /home/pepe/guardiano && ./update.sh >> /home/pepe/guardiano/update.log 2>&1
   2-59/5 * * * * cd /home/pepe/guardiano && ./guardiano.sh >> /home/pepe/guardiano/guardiano.log 2>&1
@@ -237,7 +242,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
     - `homepage-giochi-1` e `minigiochi-giochi-1`: `wget` di `http://127.0.0.1:3000/giochi/api/session` e `…:3000/api/session`, ogni 60 s (compose);
     - `chess-stockfish-1`: `GET http://127.0.0.1:8000/api/health` con Python (l'immagine `python:slim` non ha `wget`), ogni 60 s (compose);
     - `onlineemu-romm-1`: `wget` di `http://127.0.0.1:8080/api/heartbeat`, ogni 60 s, timeout 10 s; nei primi 5 minuti dopo l'avvio gli errori non contano, perché dopo un aggiornamento RomM migra il database (compose). `onlineemu-db-1`: `healthcheck.sh` di MariaDB, ogni 10 s (compose);
-    - `pizzapp-pizzapp-1`, `infernotuffatori-infernotuffatori-1`, `logoapp-logoapp-1`: `wget` di `http://127.0.0.1:3000/api/salute`, ogni 60 s (compose);
+    - `pizzapp-pizzapp-1`, `infernotuffatori-infernotuffatori-1`, `logoapp-logoapp-1`, `logoapp-collaudo-logoapp-1`: `wget` di `http://127.0.0.1:3000/api/salute`, ogni 60 s (compose);
     - `parole-parole-1`: `wget` di `http://127.0.0.1:3000/`, ogni 30 s (`Dockerfile`); `meteo`: `wget` di `http://127.0.0.1:8765/healthz`, ogni 60 s (`Dockerfile`);
     - **senza healthcheck, apposta**: i container Tailscale (`ingressi-https-*-1` e `parole-tailscale-public-1`). Reggono gli indirizzi HTTPS e il funnel, quasi tutti in `network_mode: host`: un controllo sbagliato li farebbe riavviare a vuoto e cadere gli indirizzi. Il guardiano li riaccende solo se si fermano.
 - Segreti (password, auth key) solo nel `.env` della repo sul Pi, **mai su git** (`.env` è in `.gitignore`). Per inserirli senza lasciarli nella cronologia: riga che inizia con uno spazio, ` read -rsp "Password: " P && echo "NOME=$P" >> .env && unset P && echo`.
