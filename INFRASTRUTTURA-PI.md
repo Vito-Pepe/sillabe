@@ -1,6 +1,6 @@
 # Infrastruttura del Raspberry Pi: cosa è già occupato
 
-Ultimo aggiornamento: 2026-11-07.
+Ultimo aggiornamento: 2026-11-10.
 
 > **Per una nuova sessione di Claude (o chiunque aggiunga un progetto al Pi): leggi tutto questo file prima di scegliere porte, nomi o configurazioni.**
 > Sul Pi girano già diverse app. Porte, nomi di container, reti, volumi, nomi Tailscale, percorsi pubblici e cookie elencati qui sotto **sono occupati**: non darli per liberi. In caso di dubbio non indovinare, ma chiedi all'utente di lanciare i comandi della sezione 9 e lavora sul loro output.
@@ -180,7 +180,7 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
 | `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14), catalogo aggiornato dalla wiki con le icone (`catalogo/`) e ordini di gioco con il loro storico (`ordini/`) |
 | `ingressi-https_<app>-state` (11) | identità dei dispositivi Tailscale per app |
-| `logoapp_dati` | parole caricate nella Libreria di LogoApp, con le immagini dentro `logoapp.json`, e correzioni alle parole incluse; una copia al giorno in `backup/` (ultime 14); dal 2026-11-07 il codice delle ultime 50 stampe in `stampe/` (pagine HTML, si possono perdere). Quello che succede nell'app (parole, partite con le parole in gioco, stampe) va nei log del container: `docker logs logoapp-logoapp-1` o la pagina del guardiano |
+| `logoapp_dati` | parole caricate nella Libreria di LogoApp, con le immagini dentro `logoapp.json`, e correzioni alle parole incluse; una copia al giorno in `backup/` (ultime 14); dal 2026-11-07 il codice delle ultime 50 stampe in `stampe/` (pagine HTML, si possono perdere); dal 2026-11-10 le registrazioni con la voce dell'utente (parole e sillabe) in `audio/` (un file WAV per registrazione, `logoapp.json` ne tiene l'elenco), e nella copia del giorno anche `backup/audio-<giorno>/` (hard link agli stessi file: non occupano spazio doppio; ultime 14). Quello che succede nell'app (parole, partite con le parole in gioco, stampe) va nei log del container: `docker logs logoapp-logoapp-1` o la pagina del guardiano |
 | volumi di Chess | non gestiti qui (Meteo non ne ha: tiene solo una cache in memoria) |
 
 Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update.sh` fanno solo `docker image prune -f` (immagini, non volumi).
