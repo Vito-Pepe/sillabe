@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-11-02. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-11-20. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
@@ -23,11 +23,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Impasti e ImpastiPLUS (impasti per la pizza) | `Vito-Pepe/pizzapp` | `http://192.168.1.22:8090` | `https://pizzapp.<tailnet>.ts.net` | 8090 |
 | Infernotuffatori (build di Helldivers 2) | `Vito-Pepe/infernotuffatori` | – | `https://infernotuffatori.<tailnet>.ts.net`, anche per un amico (dispositivo condiviso) | 127.0.0.1:8091 |
 | LogoApp (giochi logopedici) | `Vito-Pepe/logoapp` | – | `https://logoapp.<tailnet>.ts.net` (solo tailnet) | 127.0.0.1:8092 |
+| Morse (tasto del telegrafo e traduttore) | `Vito-Pepe/morse` | `http://192.168.1.22:8095` | `https://morse.<tailnet>.ts.net` | 8095 |
 | Meteo | `Vito-Pepe/meteo` (cartella `~/parole/meteo`) | `http://192.168.1.22:8765` | `https://meteo.<tailnet>.ts.net` | 8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
-Porte occupate sul Pi: 8080–8092 (8084, 8086, 8091 e 8092 solo su `127.0.0.1`) e 8765 (Meteo). Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
+Porte occupate sul Pi: 8080–8095 (8084, 8086 e 8091–8094 solo su `127.0.0.1`) e 8765 (Meteo); elenco aggiornato in `INFRASTRUTTURA-PI.md`. Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -161,10 +162,18 @@ Repo `logoapp`, pagina `https://logoapp.<tailnet>.ts.net`, riquadro **LogoApp** 
 
 **Solo tailnet** per scelta dell'utente: porta solo su `127.0.0.1`, niente LAN. **Dati**: server Node senza dipendenze (come Impasti); le parole caricate nella Libreria, con le immagini, e le correzioni stanno nel volume `logoapp_dati` (`logoapp.json`, un backup al giorno), uguali su tutti i dispositivi; dal 2026-11-10 anche le registrazioni con la voce dell'utente di parole e sillabe (file WAV in `audio/`), che nei giochi hanno la precedenza sulla voce sintetica. **Collaudo** dal 2026-11-10: una seconda LogoApp (`~/logoapp-collaudo`, branch `collaudo`, `https://logoapp-collaudo.<tailnet>.ts.net`, porta 8094, dati suoi) riceve prima le modifiche; l'utente le prova e le porta nella LogoApp vera con «Porta in produzione» dalla pagina «Collaudo», senza passare da GitHub; «Ricopia i dati di produzione» gli dà i dati veri (letti in sola lettura). Aperta con doppio clic su `index.html` (PC, senza Pi) salva invece nel browser. Niente password, come le altre app di casa. **Repo privata** dal 2026-11-02: il Pi la scarica con una deploy key di sola lettura (`INFRASTRUTTURA-PI.md`, sezione 7).
 
+### Morse (tasto del telegrafo e traduttore)
+
+Repo `morse` (dal 2026-11-20), pagina `https://morse.<tailnet>.ts.net` o `http://vito:8095`, riquadro **Morse** nella homepage. Due schede:
+- **Tasto**: l'albero del morse disegnato come le tessere "morse code" con le lucine (dall'antenna un punto va a destra, una linea a sinistra; cerchi e rettangoli per le lettere che finiscono con punto o linea). Un solo tasto, tocco breve = punto e pressione lunga = linea: le luci del percorso si accendono (verdi i punti, rosse le linee) e dopo una pausa la lettera va sul nastro; poi spazio, cancella, ascolta con le luci, copia. Impostazioni: velocità, due tasti, fine della lettera solo con «✓ Lettera», suono.
+- **Traduttore**: italiano ↔ morse mentre si scrive (accenti tolti, caratteri senza codice segnalati), ascolto, «Sull'albero», copia, condividi, tabella dei codici.
+
+Pagina statica (nginx, container in sola lettura come Impostore): tutto gira nel browser, niente dati sul Pi, niente cookie.
+
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera: oggi 8080–8092 sono occupate, quindi dalla 8093 in su (verificare con `ss -ltn | grep ':80'`).
+2. Porta locale libera: oggi 8080–8095 sono occupate, quindi dalla 8096 in su (elenco in `INFRASTRUTTURA-PI.md`; verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti. Un dispositivo da condividere con persone fuori dalla tailnet va su una rete sua, non su quella del Pi (come `infernotuffatori`).
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
@@ -228,7 +237,8 @@ Repo `logoapp`, pagina `https://logoapp.<tailnet>.ts.net`, riquadro **LogoApp** 
 - [x] LogoApp installata sul Pi (`~/logoapp`, porta 8092 solo su `127.0.0.1`, riga di cron) e dispositivo `logoapp` di `ingressi-https` avviato (`Startup complete`), con Disable key expiry, chiave revocata e `TS_AUTHKEY` tolta dal `.env`. Aperta dal telefono su `https://logoapp.<tailnet>.ts.net` e aggiunta alla schermata Home: funziona.
 - [x] LogoApp: repo resa privata; sul Pi deploy key di sola lettura `~/.ssh/logoapp_deploy`, host `github-logoapp` in `~/.ssh/config` e remote `git@github-logoapp:Vito-Pepe/logoapp.git`.
 - [x] Infernotuffatori: repo resa privata, come LogoApp: deploy key `~/.ssh/infernotuffatori_deploy`, host `github-infernotuffatori`, remote `git@github-infernotuffatori:Vito-Pepe/infernotuffatori.git`.
-- [ ] Scegliere la prossima app da aggiungere (dalla porta 8093).
+- [ ] Morse: installarla sul Pi (`~/morse`, porta 8095, riga di cron), avviare il dispositivo `morse` di `ingressi-https` con una auth key, Disable key expiry, chiave revocata e `TS_AUTHKEY` tolta dal `.env`; `morse` in `app.conf` del guardiano. Provare il suono su iPhone.
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8096).
 
 ## Per riprendere con Claude
 
