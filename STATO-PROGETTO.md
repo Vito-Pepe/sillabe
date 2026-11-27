@@ -1,6 +1,6 @@
 # Stato del progetto: app su Raspberry Pi 5 con Docker e Tailscale
 
-Ultimo aggiornamento: 2026-11-20. Serve per riprendere il lavoro in una nuova sessione.
+Ultimo aggiornamento: 2026-11-27. Serve per riprendere il lavoro in una nuova sessione.
 
 ## Obiettivo
 
@@ -24,11 +24,12 @@ Far girare le mie app GitHub in container Docker su un Raspberry Pi 5, raggiungi
 | Infernotuffatori (build di Helldivers 2) | `Vito-Pepe/infernotuffatori` | – | `https://infernotuffatori.<tailnet>.ts.net`, anche per un amico (dispositivo condiviso) | 127.0.0.1:8091 |
 | LogoApp (giochi logopedici) | `Vito-Pepe/logoapp` | – | `https://logoapp.<tailnet>.ts.net` (solo tailnet) | 127.0.0.1:8092 |
 | Morse (tasto del telegrafo e traduttore) | `Vito-Pepe/morse` | `http://192.168.1.22:8095` | `https://morse.<tailnet>.ts.net` | 8095 |
+| Selvaggi Esterni (wiki di Outer Wilds) | `Vito-Pepe/selvaggiesterni` | `http://192.168.1.22:8096` | `https://selvaggiesterni.<tailnet>.ts.net` | 8096 |
 | Meteo | `Vito-Pepe/meteo` (cartella `~/parole/meteo`) | `http://192.168.1.22:8765` | `https://meteo.<tailnet>.ts.net` | 8765 |
 
 **Indirizzi HTTPS senza porta**: ogni app (tranne la homepage) ha un suo dispositivo Tailscale, avviato dalla repo `Vito-Pepe/ingressi-https` (un container `tailscale/tailscale` per app, solo tailnet, niente funnel; regole in `serve/<app>.json`). Gli indirizzi `http://vito:<porta>` e `http://192.168.1.22:<porta>` restano come riserva. La homepage aperta in https porta ai nuovi indirizzi; aperta in http usa le porte.
 
-Porte occupate sul Pi: 8080–8095 (8084, 8086 e 8091–8094 solo su `127.0.0.1`) e 8765 (Meteo); elenco aggiornato in `INFRASTRUTTURA-PI.md`. Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
+Porte occupate sul Pi: 8080–8096 (8084, 8086 e 8091–8094 solo su `127.0.0.1`) e 8765 (Meteo); elenco aggiornato in `INFRASTRUTTURA-PI.md`. Chess ha anche un container interno `chess-stockfish` (porta 8000, non pubblicata). Prima di scegliere una porta per una nuova app: `ss -ltn | grep ':80'`.
 
 Parole (da fare il deploy sul Pi, vedi `README.md` della repo) è diversa dalle altre: ha un piccolo server Node e un volume Docker `parole_parole-data` con elenco parole, foto, esercizi e codice (predefinito `7777`). Backup e recupero del codice sono nel suo README.
 
@@ -170,10 +171,16 @@ Repo `morse` (dal 2026-11-20), pagina `https://morse.<tailnet>.ts.net` o `http:/
 
 Pagina statica (nginx, container in sola lettura come Impostore): tutto gira nel browser, niente dati sul Pi, niente cookie.
 
+### Selvaggi Esterni (wiki di Outer Wilds)
+
+Repo `selvaggiesterni` (dal 2026-11-27), pagina `https://selvaggiesterni.<tailnet>.ts.net` o `http://192.168.1.22:8096`, riquadro **Selvaggi Esterni** nella homepage. Copia privata della [Outer Wilds Wiki](https://outerwilds.fandom.com) di Fandom, da consultare senza passare dal sito: niente build, solo la wiki. È per chi ha già finito il gioco: **spoiler visibili**, niente avvisi. Il dispositivo `selvaggiesterni` si **condivide** come `infernotuffatori` (ingresso su una rete sua, `ingresso-selvaggiesterni`). Il Pi la aggiorna da solo una volta al giorno (pagine, categorie, rimandi, immagini ridotte) e se la wiki non risponde tiene la copia di prima. Ricerca, categorie, indice dalla A alla Z, Novità (pagine nuove, modificate, rinominate, tolte), etichetta Spoiler e avviso al primo accesso. Testi in inglese come sulla wiki (CC BY-SA 3.0, con il link alla pagina originale e agli autori), interfaccia in italiano. Non copia le pagine vuote o vandalizzate, e se una pagina viene svuotata sulla wiki per una settimana tiene quella di prima.
+
+**Dati**: server Node senza dipendenze (struttura presa dalla Wiki di Infernotuffatori), copia e immagini nel volume `selvaggiesterni_dati`. Niente copia della wiki su git: al primo avvio il server la scarica (testi in qualche minuto, immagini in una ventina di minuti).
+
 ## Aggiungere una nuova app
 
 1. Nuova repo con Dockerfile, `docker-compose.yml`, `nginx.conf`, `update.sh` (copiarli da `homepage`).
-2. Porta locale libera: oggi 8080–8095 sono occupate, quindi dalla 8096 in su (elenco in `INFRASTRUTTURA-PI.md`; verificare con `ss -ltn | grep ':80'`).
+2. Porta locale libera: oggi 8080–8096 sono occupate, quindi dalla 8097 in su (elenco in `INFRASTRUTTURA-PI.md`; verificare con `ss -ltn | grep ':80'`).
 3. Sul Pi: `git clone https://github.com/Vito-Pepe/<repo>.git` (segue `main`), `docker compose up --build -d`, riga di cron per `update.sh`.
 4. Indirizzo HTTPS senza porta: nella repo `ingressi-https` un file `serve/<nome>.json` e un servizio nel compose (istruzioni nel suo README); al primo avvio serve una auth key Tailscale, poi Disable key expiry sul nuovo dispositivo. **Non** usare `tailscale serve` sul Pi: sostituirebbe le regole esistenti. Un dispositivo da condividere con persone fuori dalla tailnet va su una rete sua, non su quella del Pi (come `infernotuffatori`).
 5. Una riga in `app/apps.js` della homepage con `lanPort` e `tsHost` (il nome del dispositivo).
@@ -238,7 +245,8 @@ Pagina statica (nginx, container in sola lettura come Impostore): tutto gira nel
 - [x] LogoApp: repo resa privata; sul Pi deploy key di sola lettura `~/.ssh/logoapp_deploy`, host `github-logoapp` in `~/.ssh/config` e remote `git@github-logoapp:Vito-Pepe/logoapp.git`.
 - [x] Infernotuffatori: repo resa privata, come LogoApp: deploy key `~/.ssh/infernotuffatori_deploy`, host `github-infernotuffatori`, remote `git@github-infernotuffatori:Vito-Pepe/infernotuffatori.git`.
 - [ ] Morse: installarla sul Pi (`~/morse`, porta 8095, riga di cron), avviare il dispositivo `morse` di `ingressi-https` con una auth key, Disable key expiry, chiave revocata e `TS_AUTHKEY` tolta dal `.env`; `morse` in `app.conf` del guardiano. Provare il suono su iPhone.
-- [ ] Scegliere la prossima app da aggiungere (dalla porta 8096).
+- [ ] Selvaggi Esterni: avviare prima il dispositivo `selvaggiesterni` di `ingressi-https` (crea la rete `ingresso-selvaggiesterni`) con una auth key, Disable key expiry, chiave revocata e `TS_AUTHKEY` tolta dal `.env`; poi installare l'app (`~/selvaggiesterni`, porta 8096, riga di cron); `selvaggiesterni` in `app.conf` del guardiano; condividere il dispositivo (Machines → Share).
+- [ ] Scegliere la prossima app da aggiungere (dalla porta 8097).
 
 ## Per riprendere con Claude
 

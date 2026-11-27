@@ -1,6 +1,6 @@
 # Infrastruttura del Raspberry Pi: cosa è già occupato
 
-Ultimo aggiornamento: 2026-11-20.
+Ultimo aggiornamento: 2026-11-27.
 
 > **Per una nuova sessione di Claude (o chiunque aggiunga un progetto al Pi): leggi tutto questo file prima di scegliere porte, nomi o configurazioni.**
 > Sul Pi girano già diverse app. Porte, nomi di container, reti, volumi, nomi Tailscale, percorsi pubblici e cookie elencati qui sotto **sono occupati**: non darli per liberi. In caso di dubbio non indovinare, ma chiedi all'utente di lanciare i comandi della sezione 9 e lavora sul loro output.
@@ -52,12 +52,13 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8093 | 127.0.0.1 | Guardiano, pagina di stato (Node) | solo per l'ingresso HTTPS (dispositivo `guardiano` di `ingressi-https`): solo tailnet, niente LAN |
 | 8094 | 127.0.0.1 | LogoApp **collaudo** (Node) | dal 2026-11-10: le modifiche di LogoApp si provano qui prima della produzione; solo per l'ingresso HTTPS (dispositivo `logoapp-collaudo` di `ingressi-https`), solo tailnet |
 | 8095 | 0.0.0.0 | Morse (nginx) | dal 2026-11-20: tasto del telegrafo e traduttore, pagina statica |
+| 8096 | 0.0.0.0 | Selvaggi Esterni, repo `selvaggiesterni` (Node) | dal 2026-11-27: copia privata della wiki di Outer Wilds. Aperta alla LAN; l'ingresso HTTPS (condivisibile) arriva all'app dalla rete Docker `ingresso-selvaggiesterni` (sezione 5) |
 | 8765 | 0.0.0.0 | Meteo | repo `meteo`, cartella `~/parole/meteo` (aperta anche alla LAN: sezione 10) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
 Porte **interne** ai container, non pubblicate sull'host: `3000` e `3001` dei servizi Node, `8000` di `chess-stockfish`, `3306` di `onlineemu-db-1` (MariaDB), `6379` di Valkey dentro `onlineemu-romm-1`. Dentro un container nuovo si può usare qualsiasi porta; conta solo quella pubblicata sull'host.
 
-**Prima porta libera consigliata per un'app nuova: 8096**, poi 8097, ... Verificare sempre prima (sezione 9).
+**Prima porta libera consigliata per un'app nuova: 8097**, poi 8098, ... Verificare sempre prima (sezione 9).
 
 **Regola:** pubblica su `0.0.0.0` solo ciò che deve essere raggiungibile dalla LAN; ciò che serve solo a un proxy sul Pi (Tailscale, funnel) va su `127.0.0.1:<porta>`.
 
@@ -81,6 +82,7 @@ Tutte le repo sono su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tr
 | LogoApp (giochi logopedici, **solo tailnet**, repo **privata**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
 | LogoApp **collaudo** (stessa repo, branch **`collaudo`**: le modifiche si provano qui prima della produzione) | `logoapp` | `~/logoapp-collaudo` | `logoapp-collaudo` | – (solo `127.0.0.1`) | `https://logoapp-collaudo.<tailnet>.ts.net` |
 | Morse (tasto del telegrafo con l'albero delle lettere, traduttore italiano ↔ morse) | `morse` | `~/morse` | `morse` | `:8095` | `https://morse.<tailnet>.ts.net` |
+| Selvaggi Esterni (copia privata della wiki di Outer Wilds, aggiornata ogni giorno, **da condividere** con chi è fuori dalla tailnet; **niente funnel**: le immagini sono schermate del gioco) | `selvaggiesterni` | `~/selvaggiesterni` | `selvaggiesterni` | `:8096` | `https://selvaggiesterni.<tailnet>.ts.net` |
 | Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 | Guardiano (tiene accese le app: riavvia i container fermi o bloccati; pagina di stato con log e pulsanti; sezione 7) | `guardiano` | `~/guardiano` | `guardiano` (solo la pagina: lo script gira dal cron) | – (solo `127.0.0.1`) | `https://guardiano.<tailnet>.ts.net` |
@@ -100,13 +102,14 @@ minigiochi-minigiochi-1, minigiochi-giochi-1
 onlineemu-romm-1, onlineemu-db-1
 impostore-impostore-1
 morse-morse-1
+selvaggiesterni-selvaggiesterni-1
 pizzapp-pizzapp-1
 infernotuffatori-infernotuffatori-1
 logoapp-logoapp-1
 logoapp-collaudo-logoapp-1
 guardiano-web-1
 meteo (nome fisso: container_name nel compose)
-ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,logoapp,logoapp-collaudo,morse,guardiano,infernotuffatori}-1
+ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,logoapp,logoapp-collaudo,morse,selvaggiesterni,guardiano,infernotuffatori}-1
 ```
 
 ---
@@ -121,6 +124,7 @@ ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,lo
 | `parole-esercizi` | container `parole-tailscale-public-1` (repo parole) | **funnel su Internet**, vedi sotto |
 | `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp`, `logoapp-collaudo`, `morse`, `guardiano` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>`. **`guardiano` mai condiviso**: dai suoi pulsanti si fermano e riavviano i container |
 | `infernotuffatori` | container di `ingressi-https` con **rete sua** (`ingresso-infernotuffatori`, niente `network_mode: host`) | **condiviso con un amico** (Machines → Share); `443 -> http://infernotuffatori-app:3000`. L'app riconosce chi entra dalle intestazioni `Tailscale-User-*` di `tailscale serve` |
+| `selvaggiesterni` | container di `ingressi-https` con **rete sua** (`ingresso-selvaggiesterni`, niente `network_mode: host`) | **da condividere** (Machines → Share) con chi è fuori dalla tailnet; `443 -> http://selvaggiesterni-app:3000`. L'app non usa l'identità di Tailscale: è una wiki da leggere |
 
 Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso Tailscale aggiunge un numero (`parole-1`), da evitare.
 
@@ -129,7 +133,7 @@ Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso 
 - **Non lanciare `tailscale serve` sull'host per una nuova app.** Un `tailscale serve --https=<porta>` su una porta già usata **sostituisce** la regola esistente: è già successo che la homepage sparisse dalla 443. Il modo giusto per dare a un'app un indirizzo HTTPS senza porta è la repo `ingressi-https` (sezione 8).
 - Le vecchie regole `8443` (Meteo) e `10000` (Sillabe) sull'host sono state sostituite da `ingressi-https` e vanno spente o sono già spente: `tailscale serve status` deve mostrare solo la 443.
 - I container Tailscale girano in **modalità utente** (`TS_USERSPACE=true`) con `network_mode: host` e `TS_TAILSCALED_EXTRA_ARGS=--port=0`, per non scontrarsi con il Tailscale dell'host. Identità nel volume: la auth key serve solo al primo avvio, poi si toglie dal `.env` e si revoca. Su ogni nuovo dispositivo: **Disable key expiry** nel pannello.
-- **Mai condividere (Machines → Share) un dispositivo in `network_mode: host`.** In modalità utente Tailscale gira ogni connessione all'IP del dispositivo, su una porta che `serve` non gestisce, a `127.0.0.1:<stessa porta>` (`wgengine/netstack` di Tailscale), e con `network_mode: host` quel `127.0.0.1` è il Pi. Da ognuno di quei dispositivi si arriva quindi a **tutte** le porte del Pi: SSH, ogni app, anche quelle solo su `127.0.0.1` (e Parole ha il login disattivato). Per i propri dispositivi non cambia niente; per chi riceve una condivisione sì. Un dispositivo da condividere ha una rete Docker sua insieme solo all'app, come `infernotuffatori` (README di `ingressi-https`, sezione "Dispositivi da condividere").
+- **Mai condividere (Machines → Share) un dispositivo in `network_mode: host`.** In modalità utente Tailscale gira ogni connessione all'IP del dispositivo, su una porta che `serve` non gestisce, a `127.0.0.1:<stessa porta>` (`wgengine/netstack` di Tailscale), e con `network_mode: host` quel `127.0.0.1` è il Pi. Da ognuno di quei dispositivi si arriva quindi a **tutte** le porte del Pi: SSH, ogni app, anche quelle solo su `127.0.0.1` (e Parole ha il login disattivato). Per i propri dispositivi non cambia niente; per chi riceve una condivisione sì. Un dispositivo da condividere ha una rete Docker sua insieme solo all'app, come `infernotuffatori` e `selvaggiesterni` (README di `ingressi-https`, sezione "Dispositivi da condividere").
 - **`;` nelle query vietato** (non codificato): `tailscale serve` usa il proxy di Go, che toglie dalla query i parametri con un `;`, quindi all'app arriva la richiesta senza quel parametro. Nelle pagine codificare i valori con `encodeURIComponent` (`;` → `%3B`). È successo il 2026-10-30 con la mappa del meteo ("Servono da 1 a 100 punti validi").
 - **HSTS vietato** su questi nomi: un header `Strict-Transport-Security` vale per tutto il nome host, porte comprese, e rompe le app in http. Il lato pubblico di Parole manda `max-age=0` apposta.
 - iPhone con **Relay privato di iCloud**: può non risolvere i nomi `*.ts.net`. Riserva: `http://vito:<porta>`.
@@ -160,11 +164,12 @@ Le app con una parte pubblica stanno su reti con **bridge dal nome fisso**, isol
 | `br-giochi` | `giochi-net` | homepage | `giochi-firewall.sh` | `giochi-firewall.service` |
 | `br-minigiochi` | `giochi-net` | minigiochi | `minigiochi-firewall.sh` | `minigiochi-firewall.service` |
 
-Gli altri progetti (sillabe, chess, onlineemu, impostore, morse, pizzapp, infernotuffatori, meteo, logoapp, logoapp-collaudo) usano la rete predefinita del loro progetto. Morse è una pagina statica: non esce su Internet e non riceve niente da Internet. Il **collaudo di LogoApp** esce su Internet solo verso `api.github.com`, quando si tocca «Porta in produzione» o si apre la sua pagina «Collaudo» (con il token del suo `.env`, sezione 7); non riceve niente da Internet. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet. Meteo esce su Internet per le previsioni (`api.open-meteo.com`, `geocoding-api.open-meteo.com`), il nome dei luoghi (`nominatim.openstreetmap.org`) e, dal 2026-10-30, le mappe della scheda Mappa (`tile.openstreetmap.org`, scaricate dal server con cache in memoria); solo letture, non riceve niente da Internet.
+Gli altri progetti (sillabe, chess, onlineemu, impostore, morse, selvaggiesterni, pizzapp, infernotuffatori, meteo, logoapp, logoapp-collaudo) usano la rete predefinita del loro progetto. Morse è una pagina statica: non esce su Internet e non riceve niente da Internet. Selvaggi Esterni esce su Internet una volta al giorno (e con il pulsante «Aggiorna adesso», al massimo ogni 10 minuti) per leggere la wiki di Outer Wilds (`outerwilds.fandom.com`) e le sue immagini (`static.wikia.nocookie.net`), una richiesta alla volta; solo letture, non riceve niente da Internet. Il **collaudo di LogoApp** esce su Internet solo verso `api.github.com`, quando si tocca «Porta in produzione» o si apre la sua pagina «Collaudo» (con il token del suo `.env`, sezione 7); non riceve niente da Internet. Impasti (`pizzapp`) esce su Internet solo per leggere le farine dal codice a barre su `world.openfoodfacts.org`; non riceve niente da Internet. Infernotuffatori esce su Internet una volta al giorno per aggiornare il catalogo dalla wiki di Helldivers 2 (`helldivers.wiki.gg`) e le icone degli stratagemmi e i nomi dei pianeti (`raw.githubusercontent.com`), e ogni 30 minuti per il Major Order dall'API del gioco (`api.live.prod.thehelldiversgame.com`, senza account); solo letture, non riceve niente da Internet. Meteo esce su Internet per le previsioni (`api.open-meteo.com`, `geocoding-api.open-meteo.com`), il nome dei luoghi (`nominatim.openstreetmap.org`) e, dal 2026-10-30, le mappe della scheda Mappa (`tile.openstreetmap.org`, scaricate dal server con cache in memoria); solo letture, non riceve niente da Internet.
 
 | Rete | Chi la crea | Chi la usa | A cosa serve |
 |---|---|---|---|
 | `ingresso-infernotuffatori` | `ingressi-https` (servizio `infernotuffatori`, nome fisso, bridge e sottorete automatici) | `infernotuffatori` (`external: true`, alias `infernotuffatori-app`) | l'ingresso HTTPS condiviso con l'amico arriva all'app senza usare la rete del Pi (sezione 4). Va creata prima di avviare l'app |
+| `ingresso-selvaggiesterni` | `ingressi-https` (servizio `selvaggiesterni`, nome fisso, bridge e sottorete automatici) | `selvaggiesterni` (`external: true`, alias `selvaggiesterni-app`) | come sopra, per l'ingresso condivisibile di Selvaggi Esterni. Va creata prima di avviare l'app |
 
 Le sottoreti le assegna Docker in automatico (`172.x`): **non fissare sottoreti a mano**, si rischia di scontrarsi con quelle esistenti.
 
@@ -185,7 +190,8 @@ Per un'app nuova con una parte pubblica: copiare lo schema di `minigiochi/firewa
 | cartella `~/onlineEmu/dati/` (bind mount, non un volume) | giochi, BIOS, salvataggi, copertine di onlineEmu: da includere nei backup |
 | `pizzapp_dati` | ricette di Impasti e ImpastiPLUS, farine, lievito madre e impostazioni (`impasti.json`), con una copia al giorno in `backup/` (ultime 14); foto delle ricette di ImpastiPLUS in `foto/` (non sono in `impasti.json`: per salvarle serve il backup con tar del volume) |
 | `infernotuffatori_dati` | build di Infernotuffatori (`build.json`, con una copia al giorno in `backup/`, ultime 14), catalogo aggiornato dalla wiki con le icone (`catalogo/`) e ordini di gioco con il loro storico (`ordini/`) |
-| `ingressi-https_<app>-state` (13) | identità dei dispositivi Tailscale per app |
+| `selvaggiesterni_dati` | copia della wiki di Outer Wilds (`copia/wiki.json`), immagini scaricate (`copia/immagini/`, circa 65 MB), novità e stato degli aggiornamenti. Si può perdere: il server riscarica tutto da solo (i testi in qualche minuto, le immagini in una ventina di minuti) |
+| `ingressi-https_<app>-state` (14) | identità dei dispositivi Tailscale per app |
 | `logoapp_dati` | parole caricate nella Libreria di LogoApp, con le immagini dentro `logoapp.json`, e correzioni alle parole incluse; una copia al giorno in `backup/` (ultime 14); dal 2026-11-07 il codice delle ultime 50 stampe in `stampe/` (pagine HTML, si possono perdere); dal 2026-11-10 le registrazioni con la voce dell'utente (parole e sillabe) in `audio/` (un file WAV per registrazione, `logoapp.json` ne tiene l'elenco), e nella copia del giorno anche `backup/audio-<giorno>/` (hard link agli stessi file: non occupano spazio doppio; ultime 14). Quello che succede nell'app (parole, partite con le parole in gioco, stampe) va nei log del container: `docker logs logoapp-logoapp-1` o la pagina del guardiano. Dal 2026-11-10 è montato **in sola lettura** anche nel collaudo (`/produzione` di `logoapp-collaudo-logoapp-1`), per «Ricopia i dati di produzione»: il collaudo non lo può cambiare |
 | `logoapp-collaudo_dati` | dati della LogoApp di **collaudo**, stesso formato di `logoapp_dati` (copia del giorno, stampe, registrazioni): prove, si possono perdere; si rifanno con «Ricopia i dati di produzione» |
 | volumi di Chess | non gestiti qui (Meteo non ne ha: tiene solo una cache in memoria) |
@@ -225,6 +231,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
   */5 * * * * cd /home/pepe/onlineEmu && ./update.sh >> /home/pepe/onlineEmu/update.log 2>&1
   */5 * * * * cd /home/pepe/impostore && ./update.sh >> /home/pepe/impostore/update.log 2>&1
   */5 * * * * cd /home/pepe/morse && ./update.sh >> /home/pepe/morse/update.log 2>&1
+  */5 * * * * cd /home/pepe/selvaggiesterni && ./update.sh >> /home/pepe/selvaggiesterni/update.log 2>&1
   */5 * * * * cd /home/pepe/pizzapp && ./update.sh >> /home/pepe/pizzapp/update.log 2>&1
   */5 * * * * cd /home/pepe/infernotuffatori && ./update.sh >> /home/pepe/infernotuffatori/update.log 2>&1
   */5 * * * * cd /home/pepe/parole/meteo && ./update.sh >> /home/pepe/parole/meteo/update.log 2>&1
@@ -246,7 +253,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
     - `homepage-giochi-1` e `minigiochi-giochi-1`: `wget` di `http://127.0.0.1:3000/giochi/api/session` e `…:3000/api/session`, ogni 60 s (compose);
     - `chess-stockfish-1`: `GET http://127.0.0.1:8000/api/health` con Python (l'immagine `python:slim` non ha `wget`), ogni 60 s (compose);
     - `onlineemu-romm-1`: `wget` di `http://127.0.0.1:8080/api/heartbeat`, ogni 60 s, timeout 10 s; nei primi 5 minuti dopo l'avvio gli errori non contano, perché dopo un aggiornamento RomM migra il database (compose). `onlineemu-db-1`: `healthcheck.sh` di MariaDB, ogni 10 s (compose);
-    - `pizzapp-pizzapp-1`, `infernotuffatori-infernotuffatori-1`, `logoapp-logoapp-1`, `logoapp-collaudo-logoapp-1`: `wget` di `http://127.0.0.1:3000/api/salute`, ogni 60 s (compose);
+    - `pizzapp-pizzapp-1`, `infernotuffatori-infernotuffatori-1`, `selvaggiesterni-selvaggiesterni-1`, `logoapp-logoapp-1`, `logoapp-collaudo-logoapp-1`: `wget` di `http://127.0.0.1:3000/api/salute`, ogni 60 s (compose);
     - `parole-parole-1`: `wget` di `http://127.0.0.1:3000/`, ogni 30 s (`Dockerfile`); `meteo`: `wget` di `http://127.0.0.1:8765/healthz`, ogni 60 s (`Dockerfile`);
     - **senza healthcheck, apposta**: i container Tailscale (`ingressi-https-*-1` e `parole-tailscale-public-1`). Reggono gli indirizzi HTTPS e il funnel, quasi tutti in `network_mode: host`: un controllo sbagliato li farebbe riavviare a vuoto e cadere gli indirizzi. Il guardiano li riaccende solo se si fermano.
 - Segreti (password, auth key) solo nel `.env` della repo sul Pi, **mai su git** (`.env` è in `.gitignore`). Per inserirli senza lasciarli nella cronologia: riga che inizia con uno spazio, ` read -rsp "Password: " P && echo "NOME=$P" >> .env && unset P && echo`.
@@ -258,7 +265,7 @@ Mai `docker compose down -v` né `docker volume prune` su questo Pi. Gli `update
 ## 8. Checklist per un progetto nuovo
 
 1. **Nome**: repo, cartella sul Pi e progetto compose con un nome nuovo (non in sezione 3).
-2. **Porta**: la prima libera indicata in sezione 2 (oggi 8096), dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
+2. **Porta**: la prima libera indicata in sezione 2 (oggi 8097), dopo averla verificata con `ss -ltn` (sezione 9). Pubblicare `"<porta>:<porta interna>"`, oppure `"127.0.0.1:<porta>:..."` se serve solo a un proxy.
 3. **Immagini**: multi-arch o arm64 (es. `nginx:alpine`, `node:22-alpine`).
 4. **Sicurezza** (come le altre app): `read_only: true` dove possibile, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `restart: unless-stopped`, e un `healthcheck` (come le altre app: richiesta leggera alla porta interna, senza login né scritture, elenco in sezione 7), così il guardiano la riavvia se si blocca. Se ha una parte pubblica: bridge con nome fisso e firewall come in sezione 5.
 5. **Cookie**: i cookie del browser **non distinguono le porte**, quindi le app su `vito:<porta>` condividono i cookie. Nomi già usati: `s` (Parole, Path `/`), `giochi` (homepage, Path `/giochi/`), `minigiochi` (Minigiochi, Path `/api/`), `romm_session` e `romm_csrftoken` (onlineEmu, Path `/`). Usare un nome nuovo e specifico (es. `nomeapp_sess`).
@@ -310,7 +317,7 @@ Note:
 
 Due livelli, perché nessuna sessione parta senza saperlo:
 
-1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori, meteo, logoapp, guardiano, morse): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
+1. **`CLAUDE.md` in ogni repo del Pi** (sillabe, homepage, parole, minigiochi, ingressi-https, onlineEmu, impostore, pizzapp, infernotuffatori, meteo, logoapp, guardiano, morse, selvaggiesterni): Claude Code lo legge in automatico. Dice di rispondere in italiano, di leggere questo file prima di toccare l'infrastruttura, di aggiornarlo con una PR e come lavorare con l'utente. Una repo nuova deve averne uno uguale.
 2. **Script di setup dell'ambiente cloud** (Claude Code sul web): per le sessioni su repo che non hanno ancora un `CLAUDE.md`. Le istruzioni stanno in **`claude-utente.md`** (questa repo); lo script le scarica a ogni nuova sessione e le mette tra le impostazioni personali di Claude Code (`~/.claude/CLAUDE.md`), così una modifica a `claude-utente.md` vale da sola per le sessioni successive. Nelle impostazioni dell'ambiente (menu dell'ambiente nella barra del titolo della sessione → Edit → **Setup script**) va questa riga; se si usano più ambienti, va messa in ognuno:
 
 ```bash
