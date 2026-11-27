@@ -52,7 +52,7 @@ Storia e dettagli del progetto: `STATO-PROGETTO.md` (stessa repo). Link diretto 
 | 8093 | 127.0.0.1 | Guardiano, pagina di stato (Node) | solo per l'ingresso HTTPS (dispositivo `guardiano` di `ingressi-https`): solo tailnet, niente LAN |
 | 8094 | 127.0.0.1 | LogoApp **collaudo** (Node) | dal 2026-11-10: le modifiche di LogoApp si provano qui prima della produzione; solo per l'ingresso HTTPS (dispositivo `logoapp-collaudo` di `ingressi-https`), solo tailnet |
 | 8095 | 0.0.0.0 | Morse (nginx) | dal 2026-11-20: tasto del telegrafo e traduttore, pagina statica |
-| 8096 | 0.0.0.0 | Selvaggi Esterni, repo `selvaggiesterni` (Node) | dal 2026-11-27: copia privata della wiki di Outer Wilds |
+| 8096 | 0.0.0.0 | Selvaggi Esterni, repo `selvaggiesterni` (Node) | dal 2026-11-27: copia privata della wiki di Outer Wilds. Aperta alla LAN; l'ingresso HTTPS (condivisibile) arriva all'app dalla rete Docker `ingresso-selvaggiesterni` (sezione 5) |
 | 8765 | 0.0.0.0 | Meteo | repo `meteo`, cartella `~/parole/meteo` (aperta anche alla LAN: sezione 10) |
 | 41641/udp | tutte | Tailscale dell'host | i container Tailscale usano `--port=0` (porta UDP casuale) |
 
@@ -82,7 +82,7 @@ Tutte le repo sono su GitHub sotto `Vito-Pepe`, clonate in `~/<nome>` sul Pi (tr
 | LogoApp (giochi logopedici, **solo tailnet**, repo **privata**; uso non commerciale: pittogrammi ARASAAC) | `logoapp` | `~/logoapp` | `logoapp` | – (solo `127.0.0.1`) | `https://logoapp.<tailnet>.ts.net` |
 | LogoApp **collaudo** (stessa repo, branch **`collaudo`**: le modifiche si provano qui prima della produzione) | `logoapp` | `~/logoapp-collaudo` | `logoapp-collaudo` | – (solo `127.0.0.1`) | `https://logoapp-collaudo.<tailnet>.ts.net` |
 | Morse (tasto del telegrafo con l'albero delle lettere, traduttore italiano ↔ morse) | `morse` | `~/morse` | `morse` | `:8095` | `https://morse.<tailnet>.ts.net` |
-| Selvaggi Esterni (copia privata della wiki di Outer Wilds, aggiornata ogni giorno; **niente funnel**: le immagini sono schermate del gioco) | `selvaggiesterni` | `~/selvaggiesterni` | `selvaggiesterni` | `:8096` | `https://selvaggiesterni.<tailnet>.ts.net` |
+| Selvaggi Esterni (copia privata della wiki di Outer Wilds, aggiornata ogni giorno, **da condividere** con chi è fuori dalla tailnet; **niente funnel**: le immagini sono schermate del gioco) | `selvaggiesterni` | `~/selvaggiesterni` | `selvaggiesterni` | `:8096` | `https://selvaggiesterni.<tailnet>.ts.net` |
 | Meteo | `meteo` | `~/parole/meteo` (dentro la clone di Parole, sezione 10) | `meteo` | `:8765` | `https://meteo.<tailnet>.ts.net` |
 | Ingressi HTTPS | `ingressi-https` | `~/ingressi-https` | `ingressi-https` | – | (crea gli indirizzi qui sopra) |
 | Guardiano (tiene accese le app: riavvia i container fermi o bloccati; pagina di stato con log e pulsanti; sezione 7) | `guardiano` | `~/guardiano` | `guardiano` (solo la pagina: lo script gira dal cron) | – (solo `127.0.0.1`) | `https://guardiano.<tailnet>.ts.net` |
@@ -122,8 +122,9 @@ ingressi-https-{sillabe,parole,minigiochi,chess,meteo,retro,impostore,pizzapp,lo
 |---|---|---|
 | `vito` | il Pi (Tailscale sull'host) | `tailscale serve` **solo** `443 -> http://127.0.0.1:8081` (homepage). Niente funnel |
 | `parole-esercizi` | container `parole-tailscale-public-1` (repo parole) | **funnel su Internet**, vedi sotto |
-| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp`, `logoapp-collaudo`, `morse`, `selvaggiesterni`, `guardiano` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>`. **`guardiano` mai condiviso**: dai suoi pulsanti si fermano e riavviano i container |
+| `sillabe`, `parole`, `minigiochi`, `chess`, `meteo`, `retro`, `impostore`, `pizzapp`, `logoapp`, `logoapp-collaudo`, `morse`, `guardiano` | container di `ingressi-https` (`network_mode: host`) | solo tailnet, `443 -> 127.0.0.1:<porta dell'app>`. **`guardiano` mai condiviso**: dai suoi pulsanti si fermano e riavviano i container |
 | `infernotuffatori` | container di `ingressi-https` con **rete sua** (`ingresso-infernotuffatori`, niente `network_mode: host`) | **condiviso con un amico** (Machines → Share); `443 -> http://infernotuffatori-app:3000`. L'app riconosce chi entra dalle intestazioni `Tailscale-User-*` di `tailscale serve` |
+| `selvaggiesterni` | container di `ingressi-https` con **rete sua** (`ingresso-selvaggiesterni`, niente `network_mode: host`) | **da condividere** (Machines → Share) con chi è fuori dalla tailnet; `443 -> http://selvaggiesterni-app:3000`. L'app non usa l'identità di Tailscale: è una wiki da leggere |
 
 Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso Tailscale aggiunge un numero (`parole-1`), da evitare.
 
@@ -132,7 +133,7 @@ Un nome nuovo (es. `nuovaapp`) non deve coincidere con questi; se è già preso 
 - **Non lanciare `tailscale serve` sull'host per una nuova app.** Un `tailscale serve --https=<porta>` su una porta già usata **sostituisce** la regola esistente: è già successo che la homepage sparisse dalla 443. Il modo giusto per dare a un'app un indirizzo HTTPS senza porta è la repo `ingressi-https` (sezione 8).
 - Le vecchie regole `8443` (Meteo) e `10000` (Sillabe) sull'host sono state sostituite da `ingressi-https` e vanno spente o sono già spente: `tailscale serve status` deve mostrare solo la 443.
 - I container Tailscale girano in **modalità utente** (`TS_USERSPACE=true`) con `network_mode: host` e `TS_TAILSCALED_EXTRA_ARGS=--port=0`, per non scontrarsi con il Tailscale dell'host. Identità nel volume: la auth key serve solo al primo avvio, poi si toglie dal `.env` e si revoca. Su ogni nuovo dispositivo: **Disable key expiry** nel pannello.
-- **Mai condividere (Machines → Share) un dispositivo in `network_mode: host`.** In modalità utente Tailscale gira ogni connessione all'IP del dispositivo, su una porta che `serve` non gestisce, a `127.0.0.1:<stessa porta>` (`wgengine/netstack` di Tailscale), e con `network_mode: host` quel `127.0.0.1` è il Pi. Da ognuno di quei dispositivi si arriva quindi a **tutte** le porte del Pi: SSH, ogni app, anche quelle solo su `127.0.0.1` (e Parole ha il login disattivato). Per i propri dispositivi non cambia niente; per chi riceve una condivisione sì. Un dispositivo da condividere ha una rete Docker sua insieme solo all'app, come `infernotuffatori` (README di `ingressi-https`, sezione "Dispositivi da condividere").
+- **Mai condividere (Machines → Share) un dispositivo in `network_mode: host`.** In modalità utente Tailscale gira ogni connessione all'IP del dispositivo, su una porta che `serve` non gestisce, a `127.0.0.1:<stessa porta>` (`wgengine/netstack` di Tailscale), e con `network_mode: host` quel `127.0.0.1` è il Pi. Da ognuno di quei dispositivi si arriva quindi a **tutte** le porte del Pi: SSH, ogni app, anche quelle solo su `127.0.0.1` (e Parole ha il login disattivato). Per i propri dispositivi non cambia niente; per chi riceve una condivisione sì. Un dispositivo da condividere ha una rete Docker sua insieme solo all'app, come `infernotuffatori` e `selvaggiesterni` (README di `ingressi-https`, sezione "Dispositivi da condividere").
 - **`;` nelle query vietato** (non codificato): `tailscale serve` usa il proxy di Go, che toglie dalla query i parametri con un `;`, quindi all'app arriva la richiesta senza quel parametro. Nelle pagine codificare i valori con `encodeURIComponent` (`;` → `%3B`). È successo il 2026-10-30 con la mappa del meteo ("Servono da 1 a 100 punti validi").
 - **HSTS vietato** su questi nomi: un header `Strict-Transport-Security` vale per tutto il nome host, porte comprese, e rompe le app in http. Il lato pubblico di Parole manda `max-age=0` apposta.
 - iPhone con **Relay privato di iCloud**: può non risolvere i nomi `*.ts.net`. Riserva: `http://vito:<porta>`.
@@ -168,6 +169,7 @@ Gli altri progetti (sillabe, chess, onlineemu, impostore, morse, selvaggiesterni
 | Rete | Chi la crea | Chi la usa | A cosa serve |
 |---|---|---|---|
 | `ingresso-infernotuffatori` | `ingressi-https` (servizio `infernotuffatori`, nome fisso, bridge e sottorete automatici) | `infernotuffatori` (`external: true`, alias `infernotuffatori-app`) | l'ingresso HTTPS condiviso con l'amico arriva all'app senza usare la rete del Pi (sezione 4). Va creata prima di avviare l'app |
+| `ingresso-selvaggiesterni` | `ingressi-https` (servizio `selvaggiesterni`, nome fisso, bridge e sottorete automatici) | `selvaggiesterni` (`external: true`, alias `selvaggiesterni-app`) | come sopra, per l'ingresso condivisibile di Selvaggi Esterni. Va creata prima di avviare l'app |
 
 Le sottoreti le assegna Docker in automatico (`172.x`): **non fissare sottoreti a mano**, si rischia di scontrarsi con quelle esistenti.
 
